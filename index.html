@@ -1,0 +1,1926 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart Workspace</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <script type="module">
+        const manifest = {
+            name: "Smart Workspace",
+            short_name: "Workspace",
+            display: "standalone",
+            background_color: "#1a1a2e",
+            theme_color: "#1a1a2e",
+            icons: [{
+                src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231a1a2e'/><text y='50' x='50' fill='white' font-size='40' font-family='sans-serif' text-anchor='middle' dy='.3em'>SW</text></svg>",
+                sizes: "192x192",
+                type: "image/svg+xml"
+            }]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+        document.head.insertAdjacentHTML('beforeend', `<link rel="manifest" href="${URL.createObjectURL(manifestBlob)}">`);
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc, getDocs, query } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+        let firebaseConfig = {
+            apiKey: "AIzaSyA27O_tEwAdUIUN4NxwBjdQi8FcTjHOAM0",
+            authDomain: "shoval2-ec154.firebaseapp.com",
+            projectId: "shoval2-ec154",
+            storageBucket: "shoval2-ec154.firebasestorage.app",
+            messagingSenderId: "118826356032",
+            appId: "1:118826356032:web:a987981f3b450b3fce3ea5",
+            measurementId: "G-RDLQLBSLKS"
+        };
+        
+        let isUsingPlaceholder = firebaseConfig.apiKey.includes("הכנס_כאן");
+
+        if (isUsingPlaceholder && typeof __firebase_config !== 'undefined') {
+            try {
+                firebaseConfig = JSON.parse(__firebase_config);
+                isUsingPlaceholder = false;
+            } catch(e) {}
+        }
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = firebaseConfig.projectId;
+
+        window.auth = auth;
+        window.db = db;
+        window.appId = appId;
+        window.isUsingPlaceholder = isUsingPlaceholder; 
+        window.signInAnonymously = signInAnonymously;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.sendEmailVerification = sendEmailVerification;
+        window.onAuthStateChanged = onAuthStateChanged;
+        window.signOut = signOut;
+        window.doc = doc;
+        window.getDoc = getDoc;
+        window.setDoc = setDoc;
+        window.deleteDoc = deleteDoc;
+        window.collection = collection;
+        window.getDocs = getDocs;
+        window.query = query;
+        window.onSnapshot = onSnapshot;
+    </script>
+
+    <style>
+        body {
+            font-family: 'Assistant', sans-serif;
+            background: radial-gradient(circle at top left, #1a1a2e, #16213e);
+            color: #e9ecef;
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        input, textarea { user-select: auto; font-size: 16px !important; }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.25rem;
+        }
+
+        .gradient-text {
+            background: linear-gradient(90deg, #4cc9f0, #4361ee, #7209b7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .modal-overlay { background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(15px); }
+
+        .input-style {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            width: 100%; outline: none; transition: border-color 0.2s;
+            color: white; text-align: right; min-height: 48px;
+        }
+
+        .toast-msg {
+            position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: #ef4444; color: white; padding: 1rem 2rem; border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000; opacity: 0; pointer-events: none;
+        }
+        .toast-msg.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .hidden { display: none !important; }
+        
+        .loader {
+            border: 2px solid #f3f3f3; border-top: 2px solid #3498db; border-radius: 50%;
+            width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; margin-left: 8px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @media (min-width: 768px) { .mobile-only-btn { display: none !important; } }
+        button { min-height: 48px; }
+
+        #drawCanvas {
+            background-color: #fff; border-radius: 1rem; touch-action: none;
+            cursor: crosshair; width: 100%; height: 300px;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .app-item { transition: all 0.3s ease; }
+        .app-item:hover { background: rgba(255,255,255,0.1); transform: scale(1.02); }
+
+        .waffle-container {
+            position: relative; width: 24px; height: 24px; transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        .waffle-dot {
+            position: absolute; width: 10px; height: 10px; background: white; border-radius: 3px;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        .dot-1 { top: 0; right: 0; }
+        .dot-2 { top: 0; left: 0; }
+        .dot-3 { bottom: 0; right: 0; }
+        .dot-4 { bottom: 0; left: 0; }
+
+        .menu-open .waffle-container { transform: rotate(180deg); }
+        .menu-open .dot-1 { top: 50%; right: 50%; transform: translate(50%, -50%) scale(1.2); border-radius: 50%; background: #4cc9f0; }
+        .menu-open .dot-2 { top: 50%; left: 50%; transform: translate(-50%, -50%) scale(1.2); border-radius: 50%; background: #4361ee; }
+        .menu-open .dot-3 { bottom: 50%; right: 50%; transform: translate(50%, 50%) scale(1.2); border-radius: 50%; background: #7209b7; }
+        .menu-open .dot-4 { bottom: 50%; left: 50%; transform: translate(-50%, 50%) scale(1.2); border-radius: 50%; background: #f72585; }
+
+        #appDrawer { transform-origin: top right; }
+    </style>
+</head>
+<body class="p-4 md:p-10 safe-area-inset flex flex-col min-h-screen relative">
+
+    <div id="toast" class="toast-msg font-bold text-center"></div>
+
+    <!-- מודאל אימות אימייל -->
+    <div id="verificationModal" class="fixed inset-0 z-[90] flex items-center justify-center hidden modal-overlay">
+        <div class="glass-card p-8 max-w-sm w-full border-blue-500/30 border shadow-2xl text-center">
+            <div class="text-5xl mb-4">📧</div>
+            <h3 class="text-2xl font-bold mb-2">אימות אימייל נדרש</h3>
+            <p class="text-gray-400 text-sm mb-6">מטעמי אבטחה, עליך לאמת את כתובת האימייל שלך. שלחנו לך עכשיו קישור לאימייל.</p>
+            <button onclick="window.checkVerification()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all mb-3 shadow-lg">אימתתי, אפשר להמשיך</button>
+            <button onclick="window.resendVerification()" class="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition-all border border-white/10">שלח לי אימייל שוב</button>
+            <button onclick="document.getElementById('verificationModal').classList.add('hidden')" class="mt-4 text-gray-500 text-sm hover:underline">סגור</button>
+        </div>
+    </div>
+
+    <!-- מודאלים -->
+    <div id="profilesModal" class="fixed inset-0 z-[60] flex items-center justify-center hidden modal-overlay transition-opacity">
+        <div class="p-8 max-w-4xl w-full text-center">
+            <h2 class="text-4xl md:text-5xl font-bold mb-12 text-white">מי עובד עכשיו?</h2>
+            <div id="profilesContainer" class="flex flex-wrap justify-center gap-10 mb-16"></div>
+            <button onclick="window.handleLogout()" class="border border-gray-600 text-gray-400 px-8 py-3 rounded-full hover:bg-white/10 hover:text-white transition-all text-sm font-bold tracking-wider">התנתק מהחשבון הראשי</button>
+        </div>
+    </div>
+
+    <div id="addProfileModal" class="fixed inset-0 z-[70] flex items-center justify-center hidden modal-overlay">
+        <div class="glass-card p-8 max-w-md w-full border-blue-500/30 border shadow-2xl">
+            <h3 id="addProfileTitle" class="text-2xl font-bold mb-2 text-center">פרופיל משתמש חדש</h3>
+            <div class="space-y-4">
+                <input type="text" id="newProfileName" placeholder="שם המשתמש (למשל: אבא, שובל)" class="input-style">
+                <input type="date" id="newProfileBirth" class="input-style">
+                <button id="addProfileBtn" onclick="window.submitNewProfile()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl mt-4 transition-all">שמור והמשך</button>
+                <button id="deleteProfileBtn" onclick="window.deleteProfile()" class="hidden w-full bg-red-600/20 text-red-400 border border-red-600/30 hover:bg-red-600 hover:text-white font-bold py-3 rounded-xl transition-all mt-2">מחק פרופיל</button>
+                <button onclick="window.closeAddProfile()" class="w-full text-gray-500 text-sm py-2 hover:underline text-center block mt-2">ביטול</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="authModal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+        <div class="glass-card p-8 max-w-md w-full border-blue-500/30 border shadow-2xl">
+            <div id="authChoice">
+                <div class="text-center mb-8">
+                    <div class="text-5xl mb-4">🌍</div>
+                    <h3 class="text-2xl font-bold">חשבון משפחתי / צוותי</h3>
+                    <p class="text-gray-400 text-sm mt-2">חשבון אחד, עד 4 פרופילים נפרדים.</p>
+                </div>
+                <div class="space-y-4">
+                    <button onclick="window.showForm('register')" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all">יצירת חשבון ראשי חדש</button>
+                    <button onclick="window.showForm('login')" class="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition-all border border-white/10">התחברות לחשבון קיים</button>
+                    <button onclick="window.closeModal()" class="w-full text-gray-500 text-sm hover:underline py-2 text-center block font-medium">המשך כאורח זמני</button>
+                </div>
+            </div>
+
+            <div id="registerForm" class="hidden">
+                <h3 class="text-xl font-bold mb-6 text-center">יצירת חשבון מנהל (ראשי)</h3>
+                <div class="space-y-4">
+                    <input type="text" id="regDisplayName" placeholder="שם מנהל החשבון" class="input-style">
+                    <input type="email" id="regEmail" placeholder="כתובת אימייל" class="input-style">
+                    <input type="password" id="regPassword" placeholder="סיסמה" class="input-style">
+                    <select id="regAccountType" class="input-style !py-0 text-gray-300" onchange="document.getElementById('idUploadDiv').classList.toggle('hidden', this.value !== 'school')">
+                        <option value="family">חשבון משפחתי / צוותי (רגיל)</option>
+                        <option value="school">חשבון בית ספרי (חינוכי 🎓)</option>
+                    </select>
+                    <div id="idUploadDiv" class="hidden">
+                        <label class="block text-xs text-indigo-400 mb-1 mr-1 text-right font-bold">אימות חובה: תעודה מזהה</label>
+                        <input type="file" id="regIdUpload" class="input-style text-sm !py-2">
+                    </div>
+                    <input type="date" id="regBirthDate" class="input-style">
+                    <button id="regSubmitBtn" onclick="window.submitRegister()" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl mt-4">צור חשבון מנהל</button>
+                    <button onclick="window.showForm('choice')" class="w-full text-gray-500 text-xs py-2 text-center block">חזרה</button>
+                </div>
+            </div>
+
+            <div id="loginForm" class="hidden">
+                <h3 class="text-xl font-bold mb-6 text-center">כניסה לחשבון ראשי</h3>
+                <div class="space-y-4">
+                    <input type="email" id="loginEmail" placeholder="אימייל" class="input-style">
+                    <input type="password" id="loginPassword" placeholder="סיסמה" class="input-style">
+                    <button id="loginSubmitBtn" onclick="window.submitLogin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl">כניסה</button>
+                    <button onclick="window.showForm('choice')" class="w-full text-gray-500 text-xs py-2 text-center block">חזרה</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="historyModal" class="fixed inset-0 z-[80] hidden modal-overlay p-4 flex-col justify-end md:justify-center transition-all">
+        <div class="glass-card w-full max-w-lg mx-auto md:mt-10 rounded-b-none md:rounded-2xl p-6 flex flex-col relative h-[80vh] md:h-auto md:max-h-[80vh]">
+            <button onclick="window.closeHistory()" class="absolute top-4 left-4 text-gray-400 hover:text-white text-2xl transition-colors">&times;</button>
+            <h3 id="historyTitle" class="text-2xl font-bold mb-2 text-center text-indigo-400">היסטוריית שימוש</h3>
+            <p id="historySubtitle" class="text-xs text-center text-gray-400 mb-6 border-b border-white/10 pb-4">נטען...</p>
+            <div class="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar" id="historyList"></div>
+        </div>
+    </div>
+
+    <div id="drawModal" class="fixed inset-0 z-[80] hidden modal-overlay p-4 flex-col justify-center items-center transition-all">
+        <div class="glass-card w-full max-w-lg mx-auto p-6 flex flex-col relative shadow-2xl border-purple-500/30 border">
+            <h3 class="text-2xl font-bold mb-4 text-center text-purple-400">פתק בכתב יד 🖊️</h3>
+            <canvas id="drawCanvas"></canvas>
+            <div class="flex justify-between items-center mt-4">
+                <button onclick="window.clearCanvas()" class="text-red-400 hover:text-red-300 font-bold text-sm px-4 py-2 border border-red-500/30 rounded-lg">נקה הכל</button>
+                <div class="flex gap-2">
+                    <button onclick="window.closeDrawModal()" class="text-gray-400 hover:text-white text-sm px-4 py-2">ביטול</button>
+                    <button onclick="window.saveDrawnTask()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-6 rounded-lg shadow-md">שמור פתק</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="addFolderModal" class="fixed inset-0 z-[70] flex items-center justify-center hidden modal-overlay transition-opacity">
+        <div class="glass-card p-8 max-w-sm w-full border-blue-500/30 border shadow-2xl">
+            <h3 class="text-2xl font-bold mb-4 text-center">תיקייה חדשה 📁</h3>
+            <input type="text" id="newFolderName" placeholder="שם התיקייה (לדוגמה: ציורים שלי)" class="input-style mb-4">
+            <div class="flex gap-2">
+                <button onclick="window.closeAddFolderModal()" class="flex-1 text-gray-400 hover:text-white text-sm px-4 py-2 border border-gray-600 rounded-lg">ביטול</button>
+                <button onclick="window.submitNewFolder()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-lg shadow-md">צור</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- === בר ניווט עליון === -->
+    <nav class="max-w-6xl mx-auto w-full flex justify-between items-center mb-6 glass-card px-6 py-4 gap-4 relative z-40">
+        <!-- צד ימין -->
+        <div class="flex items-center gap-4">
+            <button id="appMenuBtn" onclick="window.toggleAppMenu(event)" class="w-12 h-12 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
+                <div class="waffle-container">
+                    <div class="waffle-dot dot-1"></div>
+                    <div class="waffle-dot dot-2"></div>
+                    <div class="waffle-dot dot-3"></div>
+                    <div class="waffle-dot dot-4"></div>
+                </div>
+            </button>
+            <h1 class="text-xl md:text-2xl font-bold text-white tracking-wider hidden sm:block">Smart Workspace</h1>
+            <button id="homeBtn" onclick="window.showLauncher()" class="hidden bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-1.5 rounded-lg border border-white/10 transition-all font-bold shadow-md items-center gap-2">
+                🏠 ראשי
+            </button>
+        </div>
+
+        <!-- תפריט האפליקציות הנפתח -->
+        <div id="appDrawer" class="absolute top-20 right-6 w-72 glass-card p-4 shadow-2xl scale-0 opacity-0 pointer-events-none transition-all duration-300">
+            <h3 class="text-center text-sm text-gray-400 font-bold mb-4 border-b border-white/10 pb-2">האפליקציות שלי</h3>
+            <div class="grid grid-cols-3 gap-3">
+                <div onclick="window.openApp('search')" class="app-item flex flex-col items-center p-2 rounded-xl cursor-pointer">
+                    <div class="w-12 h-12 bg-blue-400 rounded-full flex items-center justify-center text-2xl mb-2 shadow-lg border border-white/20">🔍</div>
+                    <span class="text-[10px] text-center font-bold text-gray-200">Smart Search</span>
+                </div>
+                <div onclick="window.openApp('tasks')" class="app-item flex flex-col items-center p-2 rounded-xl cursor-pointer">
+                    <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-2xl mb-2 shadow-lg">📝</div>
+                    <span class="text-[10px] text-center font-bold text-gray-200">Smart Tasks</span>
+                </div>
+                <div onclick="window.openApp('docs')" class="app-item flex flex-col items-center p-2 rounded-xl cursor-pointer">
+                    <div class="w-12 h-12 bg-teal-600 rounded-full flex items-center justify-center text-2xl mb-2 shadow-lg">📄</div>
+                    <span class="text-[10px] text-center font-bold text-gray-200">Smart Docs</span>
+                </div>
+                <div onclick="window.openApp('accounts')" class="app-item flex flex-col items-center p-2 rounded-xl cursor-pointer">
+                    <div class="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center text-2xl mb-2 shadow-lg">👥</div>
+                    <span class="text-[10px] text-center font-bold text-gray-200">Smart Accounts</span>
+                </div>
+                <div onclick="window.openApp('editor')" class="app-item flex flex-col items-center p-2 rounded-xl cursor-pointer opacity-50">
+                    <div class="w-12 h-12 bg-indigo-500 rounded-full flex items-center justify-center text-2xl mb-2 shadow-lg">✏️</div>
+                    <span class="text-[10px] text-center font-bold text-gray-200">Smart Editor</span>
+                </div>
+                <div onclick="window.openApp('slides')" class="app-item flex flex-col items-center p-2 rounded-xl cursor-pointer opacity-50">
+                    <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-2xl mb-2 shadow-lg">📊</div>
+                    <span class="text-[10px] text-center font-bold text-gray-200">Smart Slides</span>
+                </div>
+                <div onclick="window.openApp('gallery')" class="app-item flex flex-col items-center p-2 rounded-xl cursor-pointer opacity-50">
+                    <div class="w-12 h-12 bg-pink-500 rounded-full flex items-center justify-center text-2xl mb-2 shadow-lg">🖼️</div>
+                    <span class="text-[10px] text-center font-bold text-gray-200">Smart Gallery</span>
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-white/10 text-center">
+                <button onclick="window.openApp('settings')" class="text-xs text-gray-400 hover:text-white flex items-center justify-center gap-2 w-full">
+                    ⚙️ הגדרות סביבה
+                </button>
+            </div>
+        </div>
+        
+        <!-- צד שמאל (משתמש) -->
+        <div class="flex items-center gap-3 md:gap-4">
+            <button id="historyBtn" onclick="window.openHistory()" class="hidden bg-indigo-600/20 text-indigo-300 text-xs px-3 py-2 rounded-lg border border-indigo-600/30 transition-all hover:bg-indigo-600/40 font-bold">היסטוריה</button>
+            <button id="switchProfileBtn" onclick="window.switchProfile()" class="hidden bg-purple-600/20 text-purple-400 text-xs px-3 py-2 rounded-lg border border-purple-600/30 transition-all hover:bg-purple-600/30 font-bold">החלף</button>
+            <button id="logoutBtn" onclick="window.handleLogout()" class="hidden bg-red-600/20 text-red-400 text-xs px-3 py-2 rounded-lg border border-red-600/30 transition-all hover:bg-red-600/30 font-bold">התנתק</button>
+
+            <div id="userProfile" class="flex items-center gap-3 cursor-pointer" onclick="window.handleProfileClick()">
+                <div class="flex flex-col text-left hidden sm:flex">
+                    <span id="userStatusLabel" class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">מצב אורח</span>
+                    <span class="text-sm font-bold text-white" id="userNameLabel">אורח</span>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center font-bold text-lg border border-white/20 shadow-lg" id="userInitial">?</div>
+            </div>
+            <button id="authBtn" onclick="window.openModal()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-4 py-2 rounded-lg font-bold transition-all shadow-md">התחבר</button>
+        </div>
+    </nav>
+
+    <!-- === עמוד הנחיתה (משגר) === -->
+    <div id="launcherScreen" class="max-w-6xl mx-auto w-full flex-1 flex flex-col justify-center items-center py-10 animate-fade-in relative z-10">
+        <div class="w-full flex flex-col lg:flex-row items-center gap-12">
+            <div class="flex-1 text-center lg:text-right space-y-6">
+                <h2 class="text-4xl md:text-5xl font-extrabold text-white leading-tight">
+                    מערכת <span class="gradient-text">Smart Workspace</span>
+                </h2>
+                <p class="text-gray-400 text-lg leading-relaxed max-w-lg mx-auto lg:mx-0">
+                    סביבת העבודה החכמה והמתקדמת ביותר. כל הכלים שאתה צריך, מקושרים יחד תחת ענן אחד מאובטח, עם ניהול הרשאות מלא.
+                </p>
+
+                <!-- 🔍 מנוע החיפוש החדש - Smart Search -->
+                <div class="w-full max-w-lg mx-auto lg:mx-0 mt-6 mb-8 relative group">
+                    <div class="absolute inset-0 bg-blue-500/20 blur-xl rounded-full group-hover:bg-blue-500/40 transition-all duration-500"></div>
+                    <div class="relative flex items-center bg-[#0f111a] border-2 border-blue-500 rounded-full shadow-2xl overflow-hidden p-1 transition-transform focus-within:scale-105">
+                        <span class="pl-4 pr-3 text-xl opacity-70">🔍</span>
+                        <input type="text" id="smartSearchInput" placeholder="חפש ברשת האינטרנט..." class="w-full bg-transparent text-white text-lg px-2 py-3 outline-none placeholder-gray-500" onkeydown="if(event.key === 'Enter') window.executeSmartSearch()">
+                        <button onclick="window.executeSmartSearch()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-6 rounded-full transition-all ml-1 text-sm shadow-md">חיפוש</button>
+                    </div>
+                </div>
+
+                <div class="space-y-4 mt-8 max-w-md mx-auto lg:mx-0">
+                    <div class="glass-card p-4 flex items-center gap-4 hover:scale-105 transition-transform border-l-4 border-blue-500">
+                        <div class="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center text-xl">☁️</div>
+                        <div class="text-right">
+                            <h4 class="font-bold text-white">סנכרון ענן חכם</h4>
+                            <p class="text-xs text-gray-400">גישה מכל מכשיר, בכל זמן ובכל מקום.</p>
+                        </div>
+                    </div>
+                    <div class="glass-card p-4 flex items-center gap-4 hover:scale-105 transition-transform border-l-4 border-purple-500">
+                        <div class="w-10 h-10 bg-purple-500/20 rounded-full flex items-center justify-center text-xl">🎨</div>
+                        <div class="text-right">
+                            <h4 class="font-bold text-white">כלים מתקדמים ליוצרים</h4>
+                            <p class="text-xs text-gray-400">תמיכה מלאה בעטים חכמים ולוחות ציור.</p>
+                        </div>
+                    </div>
+                    <div class="glass-card p-4 flex items-center gap-4 hover:scale-105 transition-transform border-l-4 border-emerald-500">
+                        <div class="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center text-xl">👥</div>
+                        <div class="text-right">
+                            <h4 class="font-bold text-white">ניהול חשבונות ופרופילים</h4>
+                            <p class="text-xs text-gray-400">חשבונות משפחתיים, חינוכיים ומקצועיים.</p>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="window.toggleAppMenu(event)" class="mt-8 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:scale-105 transition-transform animate-pulse">
+                    פתח אפליקציות עכשיו 🚀
+                </button>
+            </div>
+            <div class="flex-1 w-full flex justify-center lg:justify-end">
+                <div class="relative w-full max-w-lg">
+                    <div class="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full"></div>
+                    <div class="glass-card border-white/20 p-6 relative overflow-hidden">
+                        <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto drop-shadow-2xl">
+                            <path d="M140 130 C140 90, 200 80, 220 100 C250 90, 290 110, 280 150 C300 170, 280 210, 240 200 C220 230, 160 220, 150 190 C110 200, 100 160, 120 140 Z" fill="rgba(67, 97, 238, 0.2)" stroke="#4cc9f0" stroke-width="4"/>
+                            <rect x="80" y="160" width="70" height="50" rx="6" fill="#7209b7" opacity="0.8"/>
+                            <rect x="250" y="120" width="90" height="60" rx="6" fill="#f72585" opacity="0.8"/>
+                            <path d="M260 175 L330 175 L340 180 L250 180 Z" fill="#ffffff" opacity="0.5"/>
+                            <path d="M90 205 L140 205 L145 210 L85 210 Z" fill="#ffffff" opacity="0.5"/>
+                            <circle cx="115" cy="120" r="14" fill="#4cc9f0"/>
+                            <path d="M95 160 C95 140, 135 140, 135 160" fill="#4cc9f0" stroke="#4cc9f0" stroke-width="2"/>
+                            <circle cx="295" cy="80" r="16" fill="#4361ee"/>
+                            <path d="M270 120 C270 95, 320 95, 320 120" fill="#4361ee" stroke="#4361ee" stroke-width="2"/>
+                            <path d="M150 140 L250 140" stroke="#ffffff" stroke-width="3" stroke-dasharray="6,6" opacity="0.6"/>
+                            <path d="M160 180 L230 160" stroke="#ffffff" stroke-width="3" stroke-dasharray="6,6" opacity="0.6"/>
+                            <text x="180" y="120" font-size="24" fill="white">📝</text>
+                            <text x="210" y="180" font-size="24" fill="white">🖼️</text>
+                            <text x="150" y="160" font-size="20" fill="white">📊</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- === מסך אפליקציית המשימות (Smart Tasks) === -->
+    <div id="tasksAppScreen" class="max-w-6xl mx-auto w-full flex-1 hidden flex-col animate-fade-in">
+        <header class="mb-8 text-center md:text-right">
+            <h1 class="text-3xl font-extrabold text-blue-400 flex items-center justify-center md:justify-start gap-3">
+                <span>📝</span> Smart Tasks
+            </h1>
+            <p class="text-gray-400 mt-2 text-sm">האפליקציה פתוחה. המשימות שלך זמינות מכל מקום.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-4">
+                <div class="glass-card p-6 sticky top-10 border-blue-500/20 border shadow-xl">
+                    <h2 class="text-xl font-bold mb-6 text-right flex items-center gap-2">
+                        <span class="w-2 h-6 bg-blue-500 rounded-full"></span>
+                        משימה חדשה
+                    </h2>
+                    
+                    <div class="flex gap-2 mb-4">
+                        <input type="text" id="taskInput" placeholder="מה התוכנית היום?" class="input-style !mb-0 flex-1">
+                        <button id="penBtn" onclick="window.openDrawModal()" title="כתוב פתק בכתב יד" class="bg-purple-600/20 text-purple-400 border border-purple-500/30 hover:bg-purple-600 hover:text-white rounded-xl px-4 font-bold text-xl shadow-lg transition-all">
+                            🖊️
+                        </button>
+                    </div>
+                    
+                    <button onclick="window.addTask()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-lg hover:bg-blue-500 transition-all">הוסף למשימות</button>
+                </div>
+            </div>
+
+            <div class="lg:col-span-8">
+                <div class="glass-card p-6 min-h-[500px] shadow-xl">
+                    <div class="flex justify-between items-center mb-4 border-b border-white/10 pb-4">
+                        <h2 class="text-xl font-bold text-right">לוח המשימות והאלבומים</h2>
+                        <button onclick="window.openAddFolderModal()" class="text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg border border-white/10 transition-colors">+ תיקייה חדשה</button>
+                    </div>
+                    
+                    <div id="folderTabsContainer" class="flex gap-2 mb-6 overflow-x-auto pb-2 custom-scrollbar hide-scrollbar"></div>
+                    <ul id="taskList" class="space-y-4"></ul>
+                    <div id="emptyMsg" class="text-center text-gray-500 mt-24">
+                        <div class="text-4xl mb-4">📋</div>
+                        אין משימות כרגע, הכל נקי!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- === מסך אפליקציית מסמכים (Smart Docs) === -->
+    <div id="docsAppScreen" class="max-w-6xl mx-auto w-full flex-1 hidden flex-col animate-fade-in">
+        <header class="mb-8 text-center md:text-right">
+            <h1 class="text-3xl font-extrabold text-teal-400 flex items-center justify-center md:justify-start gap-3">
+                <span>📄</span> Smart Docs
+            </h1>
+            <p class="text-gray-400 mt-2 text-sm">יצירת ושמירת מסמכים ארוכים בענן הפרטי שלך.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-8">
+                <div class="glass-card p-6 shadow-xl flex flex-col min-h-[600px] border border-teal-500/20">
+                    <input type="text" id="docTitleInput" placeholder="כותרת המסמך..." class="input-style mb-4 text-xl font-bold !bg-white/10 text-white placeholder-gray-400 border-teal-500/30 focus:border-teal-400 transition-all">
+                    <textarea id="docContentInput" placeholder="התחל לכתוב את המסמך שלך כאן..." class="input-style flex-1 resize-none !bg-white/5 text-white p-4 text-lg leading-relaxed placeholder-gray-500 custom-scrollbar border-teal-500/10 focus:border-teal-400 transition-all"></textarea>
+                    <button onclick="window.saveDocument()" class="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 rounded-xl shadow-lg mt-4 transition-all">שמור מסמך ענן</button>
+                </div>
+            </div>
+            <div class="lg:col-span-4">
+                <div class="glass-card p-6 shadow-xl min-h-[600px] border border-white/10 flex flex-col">
+                    <h2 class="text-xl font-bold mb-4 border-b border-white/10 pb-2 text-right text-white">המסמכים שלי</h2>
+                    <div id="docsList" class="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-2"></div>
+                    <div id="emptyDocsMsg" class="text-center text-gray-500 mt-20 hidden">
+                        <div class="text-4xl mb-2">📁</div>
+                        אין מסמכים שמורים.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- === מסך ניהול חשבונות (Smart Accounts) === -->
+    <div id="accountsAppScreen" class="max-w-6xl mx-auto w-full flex-1 hidden flex-col animate-fade-in">
+        <header class="mb-8 text-center md:text-right">
+            <h1 class="text-3xl font-extrabold text-emerald-500 flex items-center justify-center md:justify-start gap-3">
+                <span>👥</span> Smart Accounts Manage
+            </h1>
+            <p class="text-gray-400 mt-2 text-sm">מרכז הבקרה שלך: ניהול החשבון והפרופילים המקושרים.</p>
+        </header>
+
+        <div class="glass-card p-8 max-w-3xl mx-auto w-full shadow-2xl border border-emerald-500/20">
+            <div id="accountManagerContent" class="text-center">
+                <!-- יתמלא דינמית דרך JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- === מסך הגדרות סביבה (Smart Settings) === -->
+    <div id="settingsAppScreen" class="max-w-6xl mx-auto w-full flex-1 hidden flex-col animate-fade-in">
+        <header class="mb-8 text-center md:text-right">
+            <h1 class="text-3xl font-extrabold text-gray-400 flex items-center justify-center md:justify-start gap-3">
+                <span>⚙️</span> הגדרות סביבה
+            </h1>
+            <p class="text-gray-500 mt-2 text-sm">ניהול המערכת ואבטחה.</p>
+        </header>
+
+        <div class="glass-card p-8 max-w-2xl mx-auto w-full shadow-2xl border border-green-500/30 text-center">
+            <div class="text-6xl mb-4">🟢</div>
+            <h3 class="text-2xl font-bold mb-4 text-white">חיבור מרכזי לבינה מלאכותית פעיל</h3>
+            <p class="text-gray-400 text-lg leading-relaxed">
+                המערכת מחוברת למנוע ה-AI המרכזי (Universal Key).<br>
+                אין צורך בהזנת מפתח אישי. כל משתמש שאימת את האימייל שלו יכול להשתמש בחיפוש החכם באופן חופשי ומאובטח.
+            </p>
+        </div>
+    </div>
+
+    <!-- === מסך מנוע החיפוש שלנו (Smart Search) === -->
+    <div id="searchAppScreen" class="max-w-6xl mx-auto w-full flex-1 hidden flex-col animate-fade-in">
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-extrabold text-blue-400 flex items-center justify-center gap-3">
+                <span class="text-5xl">🌍</span> Smart Search
+            </h1>
+            <p class="text-gray-400 mt-2 text-sm">מנוע החיפוש החכם של סביבת העבודה שלך, מופעל על ידי בינה מלאכותית.</p>
+        </header>
+
+        <div class="w-full max-w-3xl mx-auto mb-8">
+            <div class="relative flex items-center bg-[#0f111a] border-2 border-blue-500 rounded-full shadow-2xl overflow-hidden p-1 focus-within:scale-105 transition-transform duration-300">
+                <span class="pl-4 pr-3 text-xl opacity-70">🔍</span>
+                <input type="text" id="innerSearchInput" placeholder="חפש מידע, מושגים, או שאל שאלות..." class="w-full bg-transparent text-white text-lg px-2 py-3 outline-none placeholder-gray-500" onkeydown="if(event.key === 'Enter') window.executeSmartSearch(this.value)">
+                <button onclick="window.executeSmartSearch(document.getElementById('innerSearchInput').value)" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-6 rounded-full transition-all ml-1 text-sm shadow-md">חפש</button>
+            </div>
+        </div>
+
+        <div id="searchResults" class="max-w-4xl mx-auto w-full">
+            <div class="text-center text-gray-500 mt-10">
+                <div class="text-6xl mb-4 opacity-50">✨</div>
+                <p>הכנס מילות חיפוש למעלה כדי להתחיל בסריקת הרשת.</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        let profilesData = [];
+        let currentProfileId = null;
+        let unsubscribeTasks = null;
+        let guestTasks = []; 
+        let violationCount = 0; 
+        window.currentIsManager = false; 
+
+        let currentFolderId = 'general';
+        let allTasks = [];
+        let allFolders = [];
+        let unsubscribeFolders = null;
+
+        let allDocs = [];
+        let unsubscribeDocs = null;
+        window.editingDocId = null;
+
+        const forbiddenWords = ['סמים', 'הימורים', 'אלימות', 'פוגעני', 'קללה'];
+        const gradients = [
+            'from-blue-500 to-purple-600',
+            'from-green-400 to-emerald-600',
+            'from-pink-500 to-rose-600',
+            'from-orange-400 to-red-500'
+        ];
+
+        window.showToast = (msg, isError = true) => {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.style.background = isError ? "#ef4444" : "#10b981";
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 4000);
+        };
+
+        // --- פונקציית fetch חכמה למניעת שגיאות 503 ו-429 מעומס שרת ---
+        const fetchWithRetry = async (url, payload, retries = 3) => {
+            for (let i = 0; i <= retries; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) {
+                        let errorMessage = `HTTP error! status: ${response.status}`;
+                        try {
+                            const errorData = await response.text();
+                            errorMessage += ` - Body: ${errorData}`;
+                        } catch(e) {}
+                        throw new Error(errorMessage);
+                    }
+                    
+                    return await response.json();
+                } catch (e) {
+                    if (i === retries) throw e;
+                    
+                    // רעיון של שובל: הגרלת זמן המתנה חכם בין 60 שניות (דקה) ל-120 שניות (שתי דקות)
+                    const delayMs = Math.floor(Math.random() * (120000 - 60000 + 1)) + 60000;
+                    const delaySeconds = Math.round(delayMs / 1000);
+                    
+                    // עדכון הממשק למשתמש שידע כמה זמן בדיוק יש להמתין
+                    const statusText = document.getElementById('searchStatusText');
+                    if (statusText) {
+                        statusText.textContent = `ממתין ${delaySeconds} שניות להתקררות השרת... (ניסיון ${i+1}/${retries}) ⏳`;
+                        statusText.classList.replace('text-blue-400', 'text-orange-400');
+                    }
+                    
+                    console.log(`Server busy, retrying in ${delaySeconds}s...`);
+                    await new Promise(resolve => setTimeout(resolve, delayMs));
+                }
+            }
+        };
+
+        // --- לוגיקת אימות אימייל ---
+        window.checkVerification = async () => {
+            const user = window.auth.currentUser;
+            if (user) {
+                await user.reload(); 
+                if (user.emailVerified) {
+                    document.getElementById('verificationModal').classList.add('hidden');
+                    window.showToast("האימייל אומת בהצלחה! אפשר להתחיל לחפש.", false);
+                } else {
+                    window.showToast("האימייל עדיין לא אומת. בדוק את תיבת הדואר (וגם את הספאם).", true);
+                }
+            }
+        };
+
+        window.resendVerification = async () => {
+            const user = window.auth.currentUser;
+            if (user) {
+                try {
+                    await window.sendEmailVerification(user);
+                    window.showToast("אימייל אימות חדש נשלח אליך בהצלחה 📧", false);
+                } catch(e) {
+                    window.showToast("שגיאה: כנראה שלחנו הרגע. המתן דקה ונסה שוב.", true);
+                }
+            }
+        };
+
+        // --- לוגיקת מנוע החיפוש החכם (Smart Search) ---
+        window.executeSmartSearch = async (queryParam = null) => {
+            const launcherInput = document.getElementById('smartSearchInput');
+            const innerInput = document.getElementById('innerSearchInput');
+            
+            let query = "";
+            if (queryParam && typeof queryParam === 'string') {
+                query = queryParam.trim();
+            } else {
+                query = (launcherInput && launcherInput.value.trim()) ? launcherInput.value.trim() : (innerInput ? innerInput.value.trim() : "");
+            }
+            
+            if (!query) return window.showToast("נא להזין מילות חיפוש 🔍", true);
+            
+            const isForbidden = forbiddenWords.some(word => query.includes(word));
+            if (isForbidden) {
+                window.showToast("חיפוש מונחים אלו נחסם על ידי מערכת ההגנה 🛡️", true);
+                window.logActivity("ניסיון חיפוש חסום: " + query);
+                if(launcherInput) launcherInput.value = "";
+                if(innerInput) innerInput.value = "";
+                return;
+            }
+
+            // שלב האבטחה: בדיקת אימות אימייל לפני החיפוש
+            const user = window.auth.currentUser;
+            if (!user || user.isAnonymous || localStorage.getItem('shoval_simulated_logout') === 'true') {
+                window.showToast("יש להתחבר לחשבון משפחתי או חינוכי כדי להשתמש בחיפוש ברשת.", true);
+                window.openModal();
+                return;
+            }
+
+            await user.reload(); 
+            if (!user.emailVerified) {
+                document.getElementById('verificationModal').classList.remove('hidden');
+                return;
+            }
+
+            window.openApp('search');
+            if(innerInput) innerInput.value = query;
+            if(launcherInput) launcherInput.value = ""; 
+            
+            const resultsContainer = document.getElementById('searchResults');
+            resultsContainer.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-20 text-center">
+                    <div class="w-16 h-16 border-4 border-white/10 border-t-blue-500 rounded-full animate-spin mb-6 shadow-xl"></div>
+                    <p id="searchStatusText" class="text-blue-400 font-bold text-xl animate-pulse mb-2">Smart Search סורק את הרשת עבורך...</p>
+                    <p class="text-gray-500 text-sm">הבינה המלאכותית שלנו קוראת ומסכמת את התוצאות מכל העולם 🌍</p>
+                </div>
+            `;
+
+            try {
+                // המפתח האוניברסלי שלנו מוגדר כאן ישירות
+                // אזהרה: חובה שמאגר ה-GitHub יהיה Private כדי שגוגל לא תחסום את המפתח!
+                const UNIVERSAL_API_KEY = "AIzaSyCq-hMGGMjjZorsvcgcrRPTEDimEcQtLBM";
+                
+                const payload = {
+                    contents: [{ parts: [{ text: query }] }],
+                    systemInstruction: { parts: [{ text: "אתה מנוע החיפוש Smart Search. תפקידך לספק תשובות מדויקות, עדכניות ומועילות. **הוראה קריטית:** אם המשתמש מחפש אתר, שירות מקוון (כמו יוטיוב, גוגל, ויקיפדיה, משחקים) או כל נושא שיש לו אתר רשמי, **חובה** לכלול בתחילת או בסוף התשובה שלך קישור ישיר, תקין ופעיל בצורה של Markdown (למשל: [לחץ כאן כדי להיכנס ליוטיוב](https://www.youtube.com)). אל תמציא קישורים, השתמש רק בקישורים אמיתיים מהרשת." }] },
+                    tools: [{ "google_search": {} }]
+                };
+
+                // שימוש בפונקציית ה-fetch החכמה שמתגברת על שגיאות 503
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${UNIVERSAL_API_KEY}`;
+                const result = await fetchWithRetry(url, payload);
+                
+                let text = result.candidates?.[0]?.content?.parts?.[0]?.text || "לא מצאנו תשובה ברורה ברשת.";
+                const attributions = result.candidates?.[0]?.groundingMetadata?.groundingAttributions || [];
+                
+                let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b class="text-blue-300">$1</b>'); 
+                formattedText = formattedText.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g, '<a href="$2" target="_blank" class="text-blue-400 font-bold hover:underline hover:text-blue-300 underline-offset-4">🔗 $1</a>');
+                formattedText = formattedText.replace(/(^|[^"'])(https?:\/\/[^\s\)]+)/g, '$1<a href="$2" target="_blank" class="text-blue-400 font-bold hover:underline hover:text-blue-300 underline-offset-4 break-all">🔗 $2</a>');
+                formattedText = formattedText.replace(/\n/g, '<br>');
+
+                let sourcesHtml = '';
+                if (attributions.length > 0) {
+                    const uniqueSources = [];
+                    const seenUrls = new Set();
+                    attributions.forEach(attr => {
+                        const uri = attr.web?.uri;
+                        const title = attr.web?.title;
+                        if (uri && title && !seenUrls.has(uri)) {
+                            seenUrls.add(uri);
+                            uniqueSources.push({ uri, title });
+                        }
+                    });
+
+                    if (uniqueSources.length > 0) {
+                        sourcesHtml = `
+                            <div class="mt-8 border-t border-white/10 pt-6">
+                                <h4 class="text-lg font-bold text-blue-400 mb-4 flex items-center gap-2"><span>🔗</span> מקורות מידע נוספים מרחבי הרשת:</h4>
+                                <div class="flex flex-wrap gap-2">
+                                    ${uniqueSources.map(s => `<a href="${s.uri}" target="_blank" class="bg-blue-600/10 text-blue-300 hover:bg-blue-600 hover:text-white px-4 py-2 rounded-xl border border-blue-500/30 transition-all text-sm truncate max-w-[250px] shadow-sm flex items-center gap-2"><span>🌐</span> ${s.title}</a>`).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+
+                resultsContainer.innerHTML = `
+                    <div class="bg-white/5 p-8 rounded-2xl border border-white/10 shadow-2xl backdrop-blur-md">
+                        <h3 class="text-2xl font-bold text-white mb-6 border-b border-white/10 pb-4">תוצאות עבור: <span class="text-blue-400">"${query}"</span></h3>
+                        <div class="text-right text-gray-200 leading-relaxed text-lg font-medium">
+                            ${formattedText}
+                        </div>
+                        ${sourcesHtml}
+                    </div>
+                `;
+                window.logActivity("חיפש במנוע הפנימי: " + query);
+
+            } catch (e) {
+                console.error("Search Error:", e);
+                
+                let errorTitle = "אופס! שגיאת גישה";
+                let errorDesc = "החיבור למנוע הבינה המלאכותית נדחה או נכשל בעקבות עומס קשה בשרת.";
+                let btnHtml = `<button onclick="window.executeSmartSearch('${query}')" class="mt-4 bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded-lg transition-all shadow-md">נסה שוב</button>`;
+                
+                // הוספנו זיהוי חכם לשגיאת עומס 429
+                if (e.message.includes('429')) {
+                    errorTitle = "היי, לאט לאט! 🚦";
+                    errorDesc = "עברת את מהירות החיפושים המותרת כרגע (יותר מדי בקשות ברצף). המערכת צריכה להתרענן. אנא המתן כדקה ונסה שוב.";
+                } else if (e.message === "API_KEY_MISSING" || e.message.includes('403') || e.message.includes('400')) {
+                    errorTitle = "שגיאת גישה / מפתח 🔑";
+                    errorDesc = "השרת סירב לבקשה. ייתכן שיש חסימה למפתח החיפוש האוניברסלי כרגע.";
+                }
+
+                resultsContainer.innerHTML = `
+                    <div class="text-center bg-red-500/10 border border-red-500/30 p-8 rounded-2xl max-w-lg mx-auto">
+                        <div class="text-5xl mb-4">🔌</div>
+                        <p class="font-bold text-xl text-red-400 mb-2">${errorTitle}</p>
+                        <p class="text-gray-300 mb-2">${errorDesc}</p>
+                        ${btnHtml}
+                    </div>
+                `;
+            }
+        };
+
+        // --- לוגיקת הגדרות סביבה (Smart Settings) ---
+        window.loadSettings = async () => {
+            // הפונקציה נשארה ריקה כי המערכת משתמשת במפתח אוניברסלי ואין צורך לטעון הגדרות API
+        };
+
+        window.saveSettings = async () => {
+            // בוטל הצורך בשמירת מפתח בהגדרות
+        };
+
+        // --- לוגיקת לחצן האפליקציות וניווט ---
+        window.toggleAppMenu = (e) => {
+            if(e) e.stopPropagation();
+            const btn = document.getElementById('appMenuBtn');
+            const drawer = document.getElementById('appDrawer');
+            
+            if (btn.classList.contains('menu-open')) {
+                btn.classList.remove('menu-open');
+                drawer.classList.remove('scale-100', 'opacity-100', 'pointer-events-auto');
+            } else {
+                btn.classList.add('menu-open');
+                drawer.classList.add('scale-100', 'opacity-100', 'pointer-events-auto');
+            }
+        };
+
+        window.addEventListener('click', (e) => {
+            const drawer = document.getElementById('appDrawer');
+            const btn = document.getElementById('appMenuBtn');
+            if (btn && btn.classList.contains('menu-open') && !drawer.contains(e.target) && !btn.contains(e.target)) {
+                window.toggleAppMenu();
+            }
+        });
+
+        window.showLauncher = () => {
+            document.getElementById('launcherScreen').classList.remove('hidden');
+            document.getElementById('launcherScreen').classList.add('flex');
+            
+            document.getElementById('tasksAppScreen').classList.remove('flex');
+            document.getElementById('tasksAppScreen').classList.add('hidden');
+            
+            document.getElementById('docsAppScreen').classList.remove('flex');
+            document.getElementById('docsAppScreen').classList.add('hidden');
+            
+            document.getElementById('accountsAppScreen').classList.remove('flex');
+            document.getElementById('accountsAppScreen').classList.add('hidden');
+            
+            document.getElementById('searchAppScreen').classList.remove('flex');
+            document.getElementById('searchAppScreen').classList.add('hidden');
+            
+            document.getElementById('settingsAppScreen').classList.remove('flex');
+            document.getElementById('settingsAppScreen').classList.add('hidden');
+            
+            const homeBtn = document.getElementById('homeBtn');
+            if(homeBtn) homeBtn.classList.add('hidden');
+        };
+
+        window.openApp = (appId) => {
+            window.toggleAppMenu(); 
+            
+            document.getElementById('launcherScreen').classList.add('hidden');
+            document.getElementById('launcherScreen').classList.remove('flex');
+            
+            document.getElementById('tasksAppScreen').classList.remove('flex');
+            document.getElementById('tasksAppScreen').classList.add('hidden');
+            
+            document.getElementById('docsAppScreen').classList.remove('flex');
+            document.getElementById('docsAppScreen').classList.add('hidden');
+            
+            document.getElementById('accountsAppScreen').classList.remove('flex');
+            document.getElementById('accountsAppScreen').classList.add('hidden');
+
+            document.getElementById('searchAppScreen').classList.remove('flex');
+            document.getElementById('searchAppScreen').classList.add('hidden');
+
+            document.getElementById('settingsAppScreen').classList.remove('flex');
+            document.getElementById('settingsAppScreen').classList.add('hidden');
+
+            const homeBtn = document.getElementById('homeBtn');
+            if(homeBtn) homeBtn.classList.remove('hidden');
+
+            if (appId === 'tasks') {
+                document.getElementById('tasksAppScreen').classList.remove('hidden');
+                document.getElementById('tasksAppScreen').classList.add('flex');
+            } else if (appId === 'docs') {
+                document.getElementById('docsAppScreen').classList.remove('hidden');
+                document.getElementById('docsAppScreen').classList.add('flex');
+                if (window.auth.currentUser && currentProfileId) {
+                    listenToCloudDocs(window.auth.currentUser.uid, currentProfileId);
+                }
+            } else if (appId === 'accounts') {
+                document.getElementById('accountsAppScreen').classList.remove('hidden');
+                document.getElementById('accountsAppScreen').classList.add('flex');
+                window.renderAccountsScreen();
+            } else if (appId === 'search') {
+                document.getElementById('searchAppScreen').classList.remove('hidden');
+                document.getElementById('searchAppScreen').classList.add('flex');
+                document.getElementById('innerSearchInput').focus();
+            } else if (appId === 'settings') {
+                document.getElementById('settingsAppScreen').classList.remove('hidden');
+                document.getElementById('settingsAppScreen').classList.add('flex');
+            } else {
+                window.showToast(`אפליקציית ${appId} תהיה זמינה בשדרוג הבא! 🚀`, false);
+                window.showLauncher();
+            }
+        };
+
+        // --- פונקציות המערכת ---
+        window.openAddFolderModal = () => {
+            document.getElementById('newFolderName').value = '';
+            document.getElementById('addFolderModal').classList.remove('hidden');
+            document.getElementById('addFolderModal').classList.add('flex');
+        };
+
+        window.closeAddFolderModal = () => {
+            document.getElementById('addFolderModal').classList.add('hidden');
+            document.getElementById('addFolderModal').classList.remove('flex');
+        };
+
+        window.submitNewFolder = async () => {
+            const folderName = document.getElementById('newFolderName').value.trim();
+            if (!folderName) return window.showToast("נא להזין שם לתיקייה");
+
+            const user = window.auth.currentUser;
+            if (!user || !currentProfileId) {
+                window.showToast("תיקיות זמינות רק למשתמשים מחוברים!", true);
+                window.closeAddFolderModal();
+                return;
+            }
+
+            const btn = document.querySelector('#addFolderModal button:nth-child(2)');
+            btn.disabled = true;
+            btn.textContent = 'יוצר...';
+
+            try {
+                const folderId = 'folder_' + Date.now().toString();
+                await window.setDoc(window.doc(window.db, "artifacts", window.appId, "users", user.uid, `folders_${currentProfileId}`, folderId), {
+                    name: folderName,
+                    createdAt: new Date().toISOString()
+                });
+                
+                window.logActivity("יצר/ה תיקייה חדשה: " + folderName);
+                window.showToast("התיקייה נוצרה בהצלחה", false);
+                window.closeAddFolderModal();
+                window.selectFolder(folderId); 
+            } catch (e) {
+                console.error(e);
+                window.showToast("שגיאה ביצירת התיקייה");
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'צור';
+            }
+        };
+
+        window.selectFolder = (folderId) => {
+            currentFolderId = folderId;
+            renderFolders();
+            if(window.auth.currentUser && currentProfileId && localStorage.getItem('shoval_simulated_logout') !== 'true') {
+                renderTasks();
+            } else {
+                renderGuestTasks();
+            }
+        };
+
+        const renderFolders = () => {
+            const container = document.getElementById('folderTabsContainer');
+            if (!container) return;
+            
+            let html = `
+                <button onclick="window.selectFolder('general')" class="whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-bold transition-all border ${currentFolderId === 'general' ? 'bg-blue-600 border-blue-500 text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}">
+                    כללי
+                </button>
+            `;
+            
+            allFolders.forEach(f => {
+                const isActive = currentFolderId === f.id;
+                html += `
+                    <button onclick="window.selectFolder('${f.id}')" class="whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-bold transition-all border ${isActive ? 'bg-blue-600 border-blue-500 text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}">
+                        📁 ${f.name}
+                    </button>
+                `;
+            });
+            
+            container.innerHTML = html;
+        };
+
+        const listenToCloudFolders = (userId, profileId) => {
+            if (unsubscribeFolders) unsubscribeFolders();
+            const foldersRef = window.collection(window.db, "artifacts", window.appId, "users", userId, `folders_${profileId}`);
+            
+            unsubscribeFolders = window.onSnapshot(foldersRef, (snapshot) => {
+                allFolders = [];
+                snapshot.forEach(doc => allFolders.push({ id: doc.id, ...doc.data() }));
+                allFolders.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+                renderFolders();
+            }, (error) => console.error("Folders sync error:", error));
+        };
+
+        let mouseTipShown = false;
+        const canvas = document.getElementById('drawCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            clearCanvas(); 
+        }
+        window.addEventListener('resize', () => { if(!document.getElementById('drawModal').classList.contains('hidden')) resizeCanvas(); });
+
+        window.clearCanvas = () => {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        };
+
+        window.openDrawModal = () => {
+            document.getElementById('drawModal').classList.remove('hidden');
+            document.getElementById('drawModal').classList.add('flex');
+            setTimeout(resizeCanvas, 50); 
+        };
+
+        window.closeDrawModal = () => {
+            document.getElementById('drawModal').classList.add('hidden');
+            document.getElementById('drawModal').classList.remove('flex');
+        };
+
+        canvas.addEventListener('pointerdown', (e) => {
+            isDrawing = true;
+            if (e.pointerType === 'mouse' && !mouseTipShown) {
+                window.showToast("טיפ: מומלץ לחבר לוח ציור (Drawing Pad) לשיפור חווית משתמש 🎨", false);
+                mouseTipShown = true;
+            }
+            ctx.beginPath();
+            ctx.moveTo(e.offsetX, e.offsetY);
+            ctx.lineWidth = e.pointerType === 'pen' ? (e.pressure * 5 + 1) : 3; 
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#000000'; 
+        });
+
+        canvas.addEventListener('pointermove', (e) => {
+            if (!isDrawing) return;
+            if (e.pointerType === 'pen') {
+                ctx.lineWidth = (e.pressure * 5) + 1; 
+            }
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.stroke();
+        });
+
+        canvas.addEventListener('pointerup', () => { isDrawing = false; });
+        canvas.addEventListener('pointerout', () => { isDrawing = false; });
+
+        window.saveDrawnTask = async () => {
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8); 
+            const user = window.auth.currentUser;
+            if (user && currentProfileId && localStorage.getItem('shoval_simulated_logout') !== 'true') {
+                try {
+                    const taskId = Date.now().toString();
+                    await window.setDoc(window.doc(window.db, "artifacts", window.appId, "users", user.uid, `tasks_${currentProfileId}`, taskId), {
+                        text: "פתק בכתב יד",
+                        isImage: true,
+                        imageUrl: dataUrl,
+                        folderId: currentFolderId,
+                        completed: false,
+                        createdAt: new Date().toISOString()
+                    });
+                    window.logActivity("יצר/ה פתק מצויר בתיקייה 🖊️"); 
+                    window.closeDrawModal();
+                    window.showToast("הפתק נשמר בהצלחה", false);
+                } catch (e) {
+                    window.showToast("שגיאה בשמירת הפתק לענן");
+                }
+            } else {
+                guestTasks.unshift({ id: Date.now(), text: "פתק בכתב יד", isImage: true, imageUrl: dataUrl, folderId: currentFolderId });
+                window.closeDrawModal();
+                renderGuestTasks();
+            }
+        };
+
+        const listenToCloudDocs = (userId, profileId) => {
+            if (unsubscribeDocs) unsubscribeDocs();
+            const docsRef = window.collection(window.db, "artifacts", window.appId, "users", userId, `docs_${profileId}`);
+            
+            unsubscribeDocs = window.onSnapshot(docsRef, (snapshot) => {
+                allDocs = [];
+                snapshot.forEach(doc => allDocs.push({ id: doc.id, ...doc.data() }));
+                allDocs.sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+                renderDocsList();
+            }, (error) => console.error("Docs sync error:", error));
+        };
+
+        const renderDocsList = () => {
+            const list = document.getElementById('docsList');
+            const empty = document.getElementById('emptyDocsMsg');
+            if (!list || !empty) return;
+            
+            list.innerHTML = "";
+            if (allDocs.length === 0) {
+                empty.classList.remove('hidden');
+            } else {
+                empty.classList.add('hidden');
+                allDocs.forEach(d => {
+                    const dateStr = new Date(d.updatedAt).toLocaleDateString('he-IL', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit'});
+                    const div = document.createElement('div');
+                    div.className = "bg-white/5 border border-white/10 p-3 rounded-lg cursor-pointer hover:bg-white/10 transition-colors group flex justify-between items-center";
+                    div.innerHTML = `
+                        <div onclick="window.openDocument('${d.id}')" class="flex-1 text-right ml-4">
+                            <h4 class="font-bold text-teal-300 text-sm truncate">${d.title}</h4>
+                            <p class="text-[10px] text-gray-500">${dateStr}</p>
+                        </div>
+                        <button onclick="window.deleteDocument('${d.id}', event)" class="text-red-500/50 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition-all rounded-full hover:bg-red-500/10">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+        };
+
+        window.openDocument = (docId) => {
+            const docObj = allDocs.find(d => d.id === docId);
+            if(docObj) {
+                window.editingDocId = docId;
+                document.getElementById('docTitleInput').value = docObj.title;
+                document.getElementById('docContentInput').value = docObj.content;
+                window.showToast("המסמך נטען", false);
+            }
+        };
+
+        window.saveDocument = async () => {
+            const title = document.getElementById('docTitleInput').value.trim();
+            const content = document.getElementById('docContentInput').value.trim();
+            if (!title) return window.showToast("חובה להזין כותרת למסמך");
+            const user = window.auth.currentUser;
+            if (!user || !currentProfileId || localStorage.getItem('shoval_simulated_logout') === 'true') {
+                return window.showToast("יש להתחבר לפרופיל ענן כדי לשמור מסמכים", true);
+            }
+            try {
+                const docId = window.editingDocId || Date.now().toString();
+                await window.setDoc(window.doc(window.db, "artifacts", window.appId, "users", user.uid, `docs_${currentProfileId}`, docId), {
+                    title: title,
+                    content: content,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+                window.logActivity("שמר/ה מסמך: " + title);
+                window.showToast("המסמך נשמר בהצלחה בענן! ☁️", false);
+                window.editingDocId = null;
+                document.getElementById('docTitleInput').value = '';
+                document.getElementById('docContentInput').value = '';
+            } catch(e) {
+                console.error(e);
+                window.showToast("שגיאה בשמירת המסמך");
+            }
+        };
+
+        window.deleteDocument = async (docId, event) => {
+            if(event) event.stopPropagation();
+            const user = window.auth.currentUser;
+            if (!user || !currentProfileId) return;
+            try {
+                await window.deleteDoc(window.doc(window.db, "artifacts", window.appId, "users", user.uid, `docs_${currentProfileId}`, docId));
+                window.showToast("מסמך נמחק לתמיד", false);
+                window.logActivity("מחק/ה מסמך לצמיתות");
+                if (window.editingDocId === docId) {
+                    window.editingDocId = null;
+                    document.getElementById('docTitleInput').value = '';
+                    document.getElementById('docContentInput').value = '';
+                }
+            } catch(e) {
+                window.showToast("שגיאה במחיקה");
+            }
+        };
+
+        window.renderAccountsScreen = () => {
+            const container = document.getElementById('accountManagerContent');
+            if (!container) return;
+            const user = window.auth.currentUser;
+            if (!user || localStorage.getItem('shoval_simulated_logout') === 'true') {
+                container.innerHTML = `
+                    <div class="text-6xl mb-4 opacity-50">🔒</div>
+                    <h3 class="text-2xl font-bold text-gray-300">אזור אישי מוגן</h3>
+                    <p class="text-gray-500 mb-6">מרכז הבקרה זמין למנהלי חשבונות בלבד. יש להתחבר כדי להמשיך.</p>
+                    <button onclick="window.openModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all">התחברות למערכת</button>
+                `;
+                return;
+            }
+
+            const currentProfile = profilesData.find(p => p.id === currentProfileId);
+            const accountTypeLabel = currentProfile && currentProfile.accountType === 'school' ? "בית ספרי (חינוכי 🎓)" : "משפחתי / צוותי";
+
+            let profilesHtml = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">`;
+            profilesData.forEach(p => {
+                profilesHtml += `
+                    <div class="bg-white/5 border border-white/10 p-4 rounded-xl flex justify-between items-center text-right hover:bg-white/10 transition-colors">
+                        <button onclick="window.openEditProfile('${p.id}', '${p.displayName}', '${p.birthDate}')" class="text-xs bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white px-4 py-2 rounded-lg border border-emerald-500/30 transition-all font-bold">ניהול</button>
+                        <div>
+                            <div class="font-bold text-white text-lg">${p.displayName}</div>
+                            <div class="text-[10px] text-gray-400">${p.isManager ? 'מנהל חשבון ראשי' : (p.isMinor ? 'פרופיל ילד (מוגן)' : 'פרופיל רגיל')}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            profilesHtml += `</div>`;
+
+            container.innerHTML = `
+                <div class="w-24 h-24 bg-gradient-to-br from-emerald-400 to-emerald-600 text-white rounded-full flex items-center justify-center text-5xl mx-auto mb-4 border-4 border-emerald-500/30 shadow-2xl">👤</div>
+                <h3 class="text-3xl font-extrabold text-white mb-2">מרכז ניהול החשבון</h3>
+                <p class="text-emerald-400 font-bold mb-8 text-lg">${user.email}</p>
+                <div class="grid grid-cols-2 gap-6 max-w-md mx-auto mb-10 text-right">
+                    <div class="bg-white/5 p-4 rounded-xl border border-white/10 shadow-inner">
+                        <div class="text-[10px] text-gray-500 uppercase tracking-wider mb-1">סוג המינוי</div>
+                        <div class="font-bold text-base text-gray-200">${accountTypeLabel}</div>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-xl border border-white/10 shadow-inner">
+                        <div class="text-[10px] text-gray-500 uppercase tracking-wider mb-1">רישיונות בשימוש</div>
+                        <div class="font-bold text-base text-emerald-400">${profilesData.length} מתוך 4 מנויים</div>
+                    </div>
+                </div>
+                <div class="border-t border-white/10 pt-8">
+                    <h4 class="text-xl font-bold text-right mb-4 flex justify-between items-center">
+                        <button onclick="window.openAddProfile()" class="text-sm bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-lg shadow-md transition-all">+ הוסף פרופיל משתמש</button>
+                        <span class="text-gray-300">המשתמשים המקושרים לחשבון</span>
+                    </h4>
+                    ${profilesHtml}
+                </div>
+            `;
+        };
+
+        const initAuth = async () => {
+            if (window.isUsingPlaceholder) {
+                window.showToast("שים לב: יש להכניס את מפתחות ה-Firebase בקוד לעבודה מחוץ ל-Sandbox", true);
+                return;
+            }
+            try {
+                if (!window.auth.currentUser) {
+                    await window.signInAnonymously(window.auth);
+                }
+            } catch (error) {
+                console.error("Auth init failed:", error);
+            }
+        };
+
+        window.logActivity = async (actionDesc) => {
+            if (!window.auth.currentUser || !currentProfileId || localStorage.getItem('shoval_simulated_logout') === 'true') return;
+            try {
+                const uid = window.auth.currentUser.uid;
+                const logId = Date.now().toString();
+                const profileName = document.getElementById('userNameLabel').textContent;
+                await window.setDoc(window.doc(window.db, "artifacts", window.appId, "users", uid, "history", logId), {
+                    profileId: currentProfileId,
+                    profileName: profileName,
+                    action: actionDesc,
+                    timestamp: new Date().toISOString()
+                });
+            } catch (e) {
+                console.error("Failed to log activity", e);
+            }
+        };
+
+        window.openHistory = async () => {
+            const modal = document.getElementById('historyModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            const list = document.getElementById('historyList');
+            const subtitle = document.getElementById('historySubtitle');
+            document.getElementById('historyTitle').textContent = window.currentIsManager ? "היסטוריית שימוש (כללית)" : "היסטוריית שימוש (אישית)";
+            subtitle.textContent = window.currentIsManager ? "מציג פעילות של כל משתמשי החשבון המקושרים" : "מציג את הפעילות האישית שלך בלבד (מצב משתמש)";
+            list.innerHTML = '<div class="text-center text-gray-500 mt-10"><span class="loader"></span> טוען נתונים...</div>';
+            try {
+                const user = window.auth.currentUser;
+                const historyRef = window.collection(window.db, "artifacts", window.appId, "users", user.uid, "history");
+                const snap = await window.getDocs(window.query(historyRef));
+                let logs = [];
+                snap.forEach(doc => logs.push({id: doc.id, ...doc.data()}));
+                if (!window.currentIsManager) {
+                    logs = logs.filter(log => log.profileId === currentProfileId);
+                }
+                logs.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+                list.innerHTML = "";
+                if (logs.length === 0) {
+                    list.innerHTML = '<div class="text-center text-gray-500 mt-10 text-sm">אין היסטוריית פעולות להצגה כרגע.</div>';
+                } else {
+                    logs.forEach(log => {
+                        const dateObj = new Date(log.timestamp);
+                        const timeStr = dateObj.toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
+                        const dateStr = dateObj.toLocaleDateString('he-IL', {day: '2-digit', month: '2-digit'});
+                        const item = document.createElement('div');
+                        item.className = "bg-white/5 p-4 rounded-xl border border-white/10 flex flex-row-reverse justify-between items-center";
+                        item.innerHTML = `
+                            <div class="flex flex-col text-right">
+                                ${window.currentIsManager ? `<span class="text-[10px] text-indigo-400 font-bold tracking-wider uppercase mb-1">${log.profileName}</span>` : ''}
+                                <span class="font-bold text-sm text-gray-200">${log.action}</span>
+                            </div>
+                            <div class="text-[10px] text-gray-500 text-left border-l border-white/10 pl-3">
+                                <div class="font-bold">${timeStr}</div>
+                                <div>${dateStr}</div>
+                            </div>
+                        `;
+                        list.appendChild(item);
+                    });
+                }
+            } catch(e) {
+                console.error(e);
+                list.innerHTML = '<div class="text-center text-red-500 mt-10">שגיאה בטעינת ההיסטוריה</div>';
+            }
+        };
+
+        window.closeHistory = () => {
+            const modal = document.getElementById('historyModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.openModal = () => document.getElementById('authModal').classList.remove('hidden');
+        window.closeModal = () => document.getElementById('authModal').classList.add('hidden');
+        
+        window.handleProfileClick = () => {
+            const user = window.auth.currentUser;
+            const isLoggedOut = localStorage.getItem('shoval_simulated_logout') === 'true';
+            
+            // אם המשתמש מחובר (לא אורח ולא התנתק הרגע) - נפתח את הפרופילים
+            if (user && !user.isAnonymous && !isLoggedOut) {
+                document.getElementById('profilesModal').classList.remove('hidden');
+            } else {
+                // אם הוא במצב אורח - נפתח את מסך ההתחברות/הרשמה
+                window.openModal();
+            }
+        };
+
+        window.editingProfileId = null;
+        let deleteConfirmTimer = null;
+
+        window.openAddProfile = () => {
+            if (!window.editingProfileId) {
+                document.getElementById('addProfileTitle').textContent = "פרופיל משתמש חדש";
+                document.getElementById('newProfileName').value = "";
+                document.getElementById('newProfileBirth').value = "";
+                document.getElementById('addProfileBtn').textContent = "שמור והמשך";
+                document.getElementById('deleteProfileBtn').classList.add('hidden');
+            }
+            document.getElementById('addProfileModal').classList.remove('hidden');
+        };
+
+        window.openEditProfile = (id, name, birthDate) => {
+            window.editingProfileId = id;
+            document.getElementById('addProfileTitle').textContent = "עריכת פרופיל";
+            document.getElementById('newProfileName').value = name;
+            document.getElementById('newProfileBirth').value = birthDate;
+            document.getElementById('addProfileBtn').textContent = "שמור שינויים";
+            
+            const deleteBtn = document.getElementById('deleteProfileBtn');
+            deleteBtn.classList.remove('hidden');
+            deleteBtn.dataset.confirm = "false";
+            deleteBtn.textContent = "מחק פרופיל";
+            
+            document.getElementById('addProfileModal').classList.remove('hidden');
+        };
+
+        window.closeAddProfile = () => {
+            window.editingProfileId = null;
+            if (deleteConfirmTimer) clearTimeout(deleteConfirmTimer);
+            document.getElementById('addProfileModal').classList.add('hidden');
+        };
+
+        window.submitNewProfile = async () => {
+            const name = document.getElementById('newProfileName').value.trim();
+            const birthDate = document.getElementById('newProfileBirth').value;
+            if(!name) return window.showToast("נא למלא את שם המשתמש", true);
+            if(!window.editingProfileId && profilesData.length >= 4) return window.showToast("הגעת למגבלת 4 משתמשים בחשבון", true);
+
+            const btn = document.getElementById('addProfileBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loader"></span> שומר...';
+            try {
+                const user = window.auth.currentUser;
+                let age = null;
+                let isMinor = false;
+                if (birthDate) {
+                    const birth = new Date(birthDate);
+                    age = new Date().getFullYear() - birth.getFullYear();
+                    isMinor = age < 18;
+                }
+                let profileRef;
+                if (window.editingProfileId) {
+                    profileRef = window.doc(window.db, "artifacts", window.appId, "users", user.uid, "user_profiles", window.editingProfileId);
+                } else {
+                    profileRef = window.doc(window.collection(window.db, "artifacts", window.appId, "users", user.uid, "user_profiles"));
+                }
+                const profileData = {
+                    id: profileRef.id,
+                    displayName: name,
+                    birthDate: birthDate || "",
+                    age: age,
+                    isMinor: isMinor
+                };
+                if (!window.editingProfileId) {
+                    profileData.createdAt = new Date().toISOString();
+                    profileData.isManager = false; 
+                    profileData.accountType = 'family';
+                }
+                await window.setDoc(profileRef, profileData, { merge: true });
+                window.showToast(window.editingProfileId ? "פרופיל עודכן בהצלחה!" : "פרופיל נוסף בהצלחה!", false);
+                window.closeAddProfile();
+                loadProfiles(user); 
+            } catch(e) {
+                console.error(e);
+                window.showToast("שגיאה בשמירת פרופיל", true);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = window.editingProfileId ? "שמור שינויים" : "שמור והמשך";
+            }
+        };
+
+        window.deleteProfile = async () => {
+            if (!window.editingProfileId) return;
+            const btn = document.getElementById('deleteProfileBtn');
+            if (btn.dataset.confirm !== "true") {
+                btn.dataset.confirm = "true";
+                btn.textContent = "בטוח? לחץ שוב למחיקה";
+                deleteConfirmTimer = setTimeout(() => {
+                    btn.dataset.confirm = "false";
+                    btn.textContent = "מחק פרופיל";
+                }, 3000);
+                return;
+            }
+            if (deleteConfirmTimer) clearTimeout(deleteConfirmTimer);
+            btn.disabled = true;
+            btn.textContent = "מוחק...";
+            try {
+                const user = window.auth.currentUser;
+                await window.deleteDoc(window.doc(window.db, "artifacts", window.appId, "users", user.uid, "user_profiles", window.editingProfileId));
+                if (window.editingProfileId === sessionStorage.getItem('shoval_current_profile_id')) {
+                    sessionStorage.removeItem('shoval_current_profile_id');
+                    currentProfileId = null;
+                }
+                window.showToast("פרופיל נמחק בהצלחה", false);
+                window.closeAddProfile();
+                loadProfiles(user);
+            } catch(e) {
+                console.error(e);
+                window.showToast("שגיאה במחיקת פרופיל", true);
+                btn.disabled = false;
+                btn.textContent = "מחק פרופיל";
+            }
+        };
+        
+        window.showForm = (type) => {
+            document.getElementById('authChoice').classList.add('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('loginForm').classList.add('hidden');
+            if (type === 'choice') document.getElementById('authChoice').classList.remove('hidden');
+            if (type === 'register') document.getElementById('registerForm').classList.remove('hidden');
+            if (type === 'login') document.getElementById('loginForm').classList.remove('hidden');
+        };
+
+        const resetMainUI = () => {
+            document.getElementById('authBtn').classList.remove('hidden');
+            const logoutBtn = document.getElementById('logoutBtn');
+            if(logoutBtn) logoutBtn.classList.add('hidden');
+            const switchProfileBtn = document.getElementById('switchProfileBtn');
+            if(switchProfileBtn) switchProfileBtn.classList.add('hidden');
+            const historyBtn = document.getElementById('historyBtn');
+            if(historyBtn) historyBtn.classList.add('hidden');
+            
+            document.getElementById('userStatusLabel').textContent = "מצב אורח";
+            document.getElementById('userStatusLabel').className = "text-[10px] text-gray-500 uppercase tracking-widest font-bold";
+            document.getElementById('userNameLabel').textContent = "אורח";
+            document.getElementById('userInitial').textContent = "?";
+            document.getElementById('userInitial').className = "w-10 h-10 rounded-full bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center font-bold text-lg border border-white/20 shadow-lg";
+            
+            currentProfileId = null;
+            window.currentIsManager = false;
+            violationCount = 0; 
+            currentFolderId = 'general';
+            
+            if (unsubscribeTasks) { unsubscribeTasks(); unsubscribeTasks = null; }
+            if (unsubscribeFolders) { unsubscribeFolders(); unsubscribeFolders = null; }
+            if (unsubscribeDocs) { unsubscribeDocs(); unsubscribeDocs = null; }
+            
+            const folderTabs = document.getElementById('folderTabsContainer');
+            if(folderTabs) folderTabs.innerHTML = "";
+            renderGuestTasks();
+        };
+
+        const loadProfiles = async (user, forceShowModal = false) => {
+            try {
+                const profilesRef = window.collection(window.db, "artifacts", window.appId, "users", user.uid, "user_profiles");
+                const snap = await window.getDocs(window.query(profilesRef));
+                
+                profilesData = [];
+                snap.forEach(doc => profilesData.push({id: doc.id, ...doc.data()}));
+                
+                if (profilesData.length === 0) {
+                    document.getElementById('addProfileTitle').textContent = "צור את הפרופיל הראשון בחשבון";
+                    document.getElementById('authBtn').classList.add('hidden');
+                    const logoutBtn = document.getElementById('logoutBtn');
+                    if(logoutBtn) logoutBtn.classList.remove('hidden');
+                    document.getElementById('userStatusLabel').textContent = "חשבון ראשי";
+                    document.getElementById('userNameLabel').textContent = "ממתין לפרופיל";
+                    if (forceShowModal) window.openAddProfile();
+                } else {
+                    document.getElementById('addProfileTitle').textContent = "פרופיל משתמש חדש";
+                    renderProfilesList();
+                    const savedProfileId = sessionStorage.getItem('shoval_current_profile_id');
+                    const foundProfile = profilesData.find(p => p.id === savedProfileId);
+                    if (foundProfile) {
+                        window.selectProfile(foundProfile.id, foundProfile.displayName, foundProfile.isMinor, gradients[0], foundProfile.isManager, foundProfile.accountType);
+                    } else {
+                        document.getElementById('authBtn').classList.add('hidden');
+                        const logoutBtn = document.getElementById('logoutBtn');
+                        if(logoutBtn) logoutBtn.classList.remove('hidden');
+                        document.getElementById('userStatusLabel').textContent = "חשבון מחובר";
+                        document.getElementById('userStatusLabel').className = "text-[10px] text-green-400 uppercase tracking-widest font-bold";
+                        document.getElementById('userNameLabel').textContent = "בחר משתמש";
+                        document.getElementById('userInitial').textContent = "👋";
+                        document.getElementById('userInitial').className = "w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-bold text-lg border border-white/20 shadow-lg text-white";
+                        if (forceShowModal) document.getElementById('profilesModal').classList.remove('hidden');
+                    }
+                }
+            } catch(e) {
+                console.error("Load profiles error", e);
+                resetMainUI();
+            }
+        };
+
+        const renderProfilesList = () => {
+            const container = document.getElementById('profilesContainer');
+            container.innerHTML = "";
+            profilesData.forEach((p, index) => {
+                const grad = gradients[index % gradients.length];
+                const div = document.createElement('div');
+                div.className = "relative group flex flex-col items-center cursor-pointer hover:scale-110 transition-transform duration-300";
+                div.onclick = () => window.selectProfile(p.id, p.displayName, p.isMinor, grad, p.isManager, p.accountType);
+                div.innerHTML = `
+                    <button onclick="event.stopPropagation(); window.openEditProfile('${p.id}', '${p.displayName}', '${p.birthDate}')" class="absolute top-2 right-2 bg-black/60 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10 text-sm hover:bg-black/80">
+                        ✏️
+                    </button>
+                    <div class="w-32 h-32 rounded-2xl bg-gradient-to-tr ${grad} flex items-center justify-center text-6xl font-bold border-4 border-transparent group-hover:border-white shadow-2xl mb-4 text-white relative overflow-hidden">
+                        ${p.displayName.charAt(0).toUpperCase()}
+                    </div>
+                    <span class="text-xl text-gray-200 font-medium flex items-center gap-2">
+                        ${p.displayName}
+                        ${p.isManager ? (p.accountType === 'school' ? '<span class="text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full">בית ספר 🎓</span>' : '<span class="text-[10px] bg-blue-500 text-white px-2 py-0.5 rounded-full">מנהל</span>') : ''}
+                    </span>
+                    ${p.isMinor ? '<span class="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full mt-2 font-bold tracking-wider">מוגן 🛡️</span>' : ''}
+                `;
+                container.appendChild(div);
+            });
+            if (profilesData.length < 4) {
+                const addDiv = document.createElement('div');
+                addDiv.className = "flex flex-col items-center cursor-pointer hover:scale-110 transition-transform duration-300";
+                addDiv.onclick = window.openAddProfile;
+                addDiv.innerHTML = `
+                    <div class="w-32 h-32 rounded-2xl bg-white/5 flex items-center justify-center text-6xl font-bold border-4 border-transparent hover:border-gray-400 border-dashed shadow-xl mb-4 text-gray-500">
+                        +
+                    </div>
+                    <span class="text-xl text-gray-400 font-medium">הוסף משתמש</span>
+                `;
+                container.appendChild(addDiv);
+            }
+        };
+
+        window.selectProfile = (profileId, profileName, isMinor, gradClass = gradients[0], isManager = false, accountType = 'family') => {
+            currentProfileId = profileId;
+            window.currentIsManager = isManager;
+            violationCount = 0; 
+            sessionStorage.setItem('shoval_current_profile_id', profileId);
+            document.getElementById('profilesModal').classList.add('hidden');
+            
+            document.getElementById('authBtn').classList.add('hidden');
+            const logoutBtn = document.getElementById('logoutBtn');
+            if(logoutBtn) logoutBtn.classList.remove('hidden');
+            const switchProfileBtn = document.getElementById('switchProfileBtn');
+            if(switchProfileBtn) switchProfileBtn.classList.remove('hidden');
+            const historyBtn = document.getElementById('historyBtn');
+            if(historyBtn) historyBtn.classList.remove('hidden');
+            
+            const userStatusLabel = document.getElementById('userStatusLabel');
+            if (isManager) {
+                if (accountType === 'school') {
+                    userStatusLabel.textContent = "מנהל בית ספרי 🎓";
+                    userStatusLabel.className = "text-[10px] text-emerald-400 uppercase tracking-widest font-bold";
+                } else {
+                    userStatusLabel.textContent = "פרופיל מנהל ראשי";
+                    userStatusLabel.className = "text-[10px] text-blue-400 uppercase tracking-widest font-bold";
+                }
+            } else {
+                userStatusLabel.textContent = isMinor ? "משתמש צעיר מוגן" : "פרופיל אישי (ענן)";
+                userStatusLabel.className = isMinor ? "text-[10px] text-yellow-400 uppercase tracking-widest font-bold" : "text-[10px] text-purple-400 uppercase tracking-widest font-bold";
+            }
+            
+            document.getElementById('userNameLabel').textContent = profileName;
+            const userInitial = document.getElementById('userInitial');
+            userInitial.textContent = profileName.charAt(0).toUpperCase();
+            userInitial.className = `w-10 h-10 rounded-full bg-gradient-to-br ${gradClass} flex items-center justify-center font-bold text-lg border border-white/20 shadow-lg text-white`;
+            
+            listenToCloudFolders(window.auth.currentUser.uid, profileId);
+            listenToCloudTasks(window.auth.currentUser.uid, profileId);
+            listenToCloudDocs(window.auth.currentUser.uid, profileId);
+            
+            window.loadSettings();
+            
+            window.logActivity("נכנס/ה למערכת");
+        };
+
+        window.switchProfile = () => {
+            sessionStorage.removeItem('shoval_current_profile_id');
+            currentProfileId = null;
+            window.currentIsManager = false;
+            violationCount = 0;
+            currentFolderId = 'general';
+            document.getElementById('taskList').innerHTML = ""; 
+            const folderTabs = document.getElementById('folderTabsContainer');
+            if(folderTabs) folderTabs.innerHTML = "";
+            
+            const historyBtn = document.getElementById('historyBtn');
+            if(historyBtn) historyBtn.classList.add('hidden');
+            
+            if(unsubscribeTasks) unsubscribeTasks();
+            if(unsubscribeFolders) unsubscribeFolders();
+            if(unsubscribeDocs) unsubscribeDocs();
+            
+            renderProfilesList();
+            document.getElementById('profilesModal').classList.remove('hidden');
+        };
+
+        window.submitRegister = async () => {
+            if (window.isUsingPlaceholder) return window.showToast("שים לב: נא לעדכן מפתחות Firebase בקוד");
+            const name = document.getElementById('regDisplayName').value.trim();
+            const email = document.getElementById('regEmail').value.trim().toLowerCase();
+            const password = document.getElementById('regPassword').value;
+            const birthDate = document.getElementById('regBirthDate').value;
+            const accountType = document.getElementById('regAccountType') ? document.getElementById('regAccountType').value : 'family';
+
+            if (!name) return window.showToast("נא למלא את שם מנהל החשבון");
+            if (!email.includes('@')) return window.showToast("אנא הזן כתובת אימייל תקינה");
+            if (password.length < 6) return window.showToast("סיסמה חייבת להכיל לפחות 6 תווים");
+
+            if (accountType === 'school') {
+                if (!birthDate) return window.showToast("חובה להזין תאריך לידה לאימות גיל");
+                const birth = new Date(birthDate);
+                const age = new Date().getFullYear() - birth.getFullYear();
+                if (age < 18) return window.showToast("יצירת חשבון חינוכי מותרת לצוות מעל גיל 18 בלבד 🛑");
+                const idFile = document.getElementById('regIdUpload').files[0];
+                if (!idFile) return window.showToast("נא להעלות צילום תעודה מזהה או כרטיס עובד להשלמת האימות");
+            }
+
+            const btn = document.getElementById('regSubmitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loader"></span> יוצר חשבון ראשי...';
+
+            try {
+                const userCredential = await window.createUserWithEmailAndPassword(window.auth, email, password);
+                const user = userCredential.user;
+                
+                try {
+                    await window.sendEmailVerification(user);
+                    window.showToast("נשלח אליך אימייל אימות! אנא בדוק את תיבת הדואר שלך 📧", false);
+                } catch(e) {
+                    console.log("Email verification not sent:", e);
+                }
+
+                let age = null;
+                let isMinor = false;
+                if (birthDate) {
+                    const birth = new Date(birthDate);
+                    age = new Date().getFullYear() - birth.getFullYear();
+                    isMinor = age < 18;
+                }
+                
+                const profileRef = window.doc(window.collection(window.db, "artifacts", window.appId, "users", user.uid, "user_profiles"));
+                const profileData = {
+                    id: profileRef.id,
+                    displayName: name,
+                    birthDate: birthDate || "",
+                    age: age,
+                    isMinor: isMinor,
+                    isManager: true, 
+                    accountType: accountType,
+                    createdAt: new Date().toISOString()
+                };
+                await window.setDoc(profileRef, profileData);
+
+                localStorage.setItem('shoval_simulated_logout', 'false');
+                window.closeModal();
+                window.selectProfile(profileData.id, profileData.displayName, profileData.isMinor, gradients[0], true, profileData.accountType);
+            } catch (err) {
+                if (err.code === 'auth/email-already-in-use') {
+                    window.showToast("האימייל כבר קיים במערכת");
+                } else if (err.code === 'auth/network-request-failed') {
+                    window.showToast("שגיאת רשת (או שהמפתחות בקוד שגויים)");
+                } else {
+                    console.error("System Error:", err);
+                    window.showToast("שגיאה ביצירת חשבון");
+                }
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "צור חשבון מנהל";
+            }
+        };
+
+        window.submitLogin = async () => {
+            if (window.isUsingPlaceholder) return window.showToast("שים לב: נא לעדכן מפתחות Firebase בקוד");
+            const emailInput = document.getElementById('loginEmail').value.trim().toLowerCase();
+            const passwordInput = document.getElementById('loginPassword').value;
+            
+            if (!emailInput || !passwordInput) return window.showToast("הזן אימייל וסיסמה");
+
+            const btn = document.getElementById('loginSubmitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loader"></span> מתחבר...';
+
+            try {
+                await window.signInWithEmailAndPassword(window.auth, emailInput, passwordInput);
+                
+                localStorage.setItem('shoval_simulated_logout', 'false');
+                window.showToast("התחברת בהצלחה לענן!", false);
+                window.closeModal();
+                loadProfiles(window.auth.currentUser, true); 
+            } catch (e) {
+                if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
+                    window.showToast("אימייל או סיסמה שגויים");
+                } else if (e.code === 'auth/network-request-failed') {
+                    window.showToast("שגיאת רשת (או שהמפתחות בקוד שגויים)");
+                } else {
+                    console.error("System Error:", e);
+                    window.showToast("שגיאה בחיבור למערכת");
+                }
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "כניסה";
+            }
+        };
+
+        const renderTasks = () => {
+            const list = document.getElementById('taskList');
+            const empty = document.getElementById('emptyMsg');
+            if (!list || !empty) return;
+            
+            list.innerHTML = "";
+            
+            const filteredTasks = allTasks.filter(t => {
+                if (currentFolderId === 'general') return !t.folderId || t.folderId === 'general';
+                return t.folderId === currentFolderId;
+            });
+            
+            if (filteredTasks.length === 0) {
+                empty.classList.remove('hidden');
+            } else {
+                empty.classList.add('hidden');
+                
+                filteredTasks.forEach(t => {
+                    const li = document.createElement('li');
+                    li.className = "glass-card p-4 flex flex-col transition-all hover:bg-white/10";
+                    
+                    let contentHtml = t.isImage 
+                        ? `<img src="${t.imageUrl}" class="bg-white rounded-lg w-full mt-2 mb-2 max-h-48 object-contain" alt="פתק בכתב יד" />`
+                        : `<span class="text-right flex-1 text-lg mb-2">${t.text}</span>`;
+
+                    li.innerHTML = `
+                        ${contentHtml}
+                        <div class="flex justify-end items-center gap-2 mt-1">
+                            <span class="text-[10px] text-purple-400/50 bg-purple-500/10 px-2 py-1 rounded-full font-bold tracking-widest uppercase">PRO</span>
+                            <button class="text-red-500/70 hover:text-red-500 p-2 transition-colors rounded-full hover:bg-red-500/10" onclick="window.deleteCloudTask('${t.id}')">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+            }
+        };
+
+        const listenToCloudTasks = (userId, profileId) => {
+            if (unsubscribeTasks) unsubscribeTasks();
+            
+            const tasksRef = window.collection(window.db, "artifacts", window.appId, "users", userId, `tasks_${profileId}`);
+            
+            unsubscribeTasks = window.onSnapshot(tasksRef, (snapshot) => {
+                allTasks = [];
+                snapshot.forEach(doc => allTasks.push({ id: doc.id, ...doc.data() }));
+                allTasks.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+                renderTasks();
+            }, (error) => {
+                console.error("Task sync error:", error);
+            });
+        };
+
+        window.deleteCloudTask = async (taskId) => {
+            const user = window.auth.currentUser;
+            if (!user || !currentProfileId) return;
+
+            try {
+                await window.deleteDoc(window.doc(window.db, "artifacts", window.appId, "users", user.uid, `tasks_${currentProfileId}`, taskId));
+                window.logActivity("מחק/ה משימה מהלוח");
+            } catch (e) {
+                window.showToast("שגיאה במחיקת המשימה מהענן");
+            }
+        };
+
+        window.handleLogout = async () => {
+            try {
+                await window.signOut(window.auth);
+                localStorage.setItem('shoval_simulated_logout', 'true');
+                document.getElementById('profilesModal').classList.add('hidden');
+                resetMainUI();
+                window.showToast("התנתקת מהחשבון הראשי בהצלחה.", false);
+                if(!window.isUsingPlaceholder) {
+                    await window.signInAnonymously(window.auth);
+                }
+            } catch (error) {
+                console.error("Logout error", error);
+            }
+        };
+
+        window.onAuthStateChanged(window.auth, async (user) => {
+            if (user && !user.isAnonymous && localStorage.getItem('shoval_simulated_logout') !== 'true') {
+                loadProfiles(user, false);
+            } else {
+                resetMainUI();
+            }
+        });
+
+        window.addTask = async () => {
+            const input = document.getElementById('taskInput');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            const isForbidden = forbiddenWords.some(word => text.includes(word));
+            
+            if (isForbidden) {
+                window.showToast("לא ניתן להשלים את הפעולה", true);
+                violationCount++; 
+                window.logActivity("ניסיון כתיבת מילה חסומה"); 
+                
+                if (violationCount >= 2 && window.auth.currentUser && currentProfileId) {
+                    try {
+                        const user = window.auth.currentUser;
+                        const profileName = document.getElementById('userNameLabel').textContent;
+                        
+                        const alertRef = window.doc(window.collection(window.db, "artifacts", window.appId, "users", user.uid, "alerts"));
+                        await window.setDoc(alertRef, {
+                            profileId: currentProfileId,
+                            profileName: profileName,
+                            violationText: text, 
+                            timestamp: new Date().toISOString()
+                        });
+                        
+                        window.showToast("הודעה נשלחה למנהל הפרופילים", true);
+                    } catch(e) {
+                        console.error("Alert save error", e);
+                    }
+                }
+                return;
+            }
+
+            const user = window.auth.currentUser;
+            
+            if (user && currentProfileId && localStorage.getItem('shoval_simulated_logout') !== 'true') {
+                try {
+                    const taskId = Date.now().toString();
+                    await window.setDoc(window.doc(window.db, "artifacts", window.appId, "users", user.uid, `tasks_${currentProfileId}`, taskId), {
+                        text: text,
+                        folderId: currentFolderId, 
+                        completed: false,
+                        createdAt: new Date().toISOString()
+                    });
+                    input.value = "";
+                    window.logActivity("הוסיף/ה משימה חדשה"); 
+                } catch (e) {
+                    window.showToast("שגיאה בשמירה בענן");
+                }
+            } else {
+                guestTasks.unshift({ id: Date.now(), text: text, folderId: currentFolderId });
+                input.value = "";
+                renderGuestTasks();
+            }
+        };
+
+        window.deleteGuestTask = (id) => {
+            guestTasks = guestTasks.filter(t => t.id !== id);
+            renderGuestTasks();
+        };
+
+        function renderGuestTasks() {
+            const list = document.getElementById('taskList');
+            const empty = document.getElementById('emptyMsg');
+            if (!list || !empty) return;
+            
+            list.innerHTML = "";
+            
+            const filteredTasks = guestTasks.filter(t => {
+                if (currentFolderId === 'general') return !t.folderId || t.folderId === 'general';
+                return t.folderId === currentFolderId;
+            });
+            
+            if(filteredTasks.length === 0) {
+                empty.classList.remove('hidden');
+            } else {
+                empty.classList.add('hidden');
+                filteredTasks.forEach(t => {
+                    const li = document.createElement('li');
+                    li.className = "glass-card p-4 flex flex-col transition-all hover:bg-white/10 opacity-80";
+                    
+                    let contentHtml = t.isImage 
+                        ? `<img src="${t.imageUrl}" class="bg-white rounded-lg w-full mt-2 mb-2 max-h-48 object-contain" alt="פתק בכתב יד" />`
+                        : `<span class="text-right flex-1 text-lg mb-2">${t.text}</span>`;
+
+                    li.innerHTML = `
+                        ${contentHtml}
+                        <div class="flex justify-end items-center gap-2">
+                            <span class="text-[10px] text-gray-400 bg-white/5 px-2 py-1 rounded-full mr-2">זמני (לדפדפן זה)</span>
+                            <button class="text-red-500/70 hover:text-red-500 p-2 transition-colors rounded-full hover:bg-red-500/10" onclick="window.deleteGuestTask(${t.id})">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+            }
+        }
+
+        initAuth();
+    </script>
+</body>
+</html>
