@@ -120,6 +120,11 @@
             background-color: #1a1a2e;
             color: white;
         }
+        
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
 
         .toast-msg {
             position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px);
@@ -184,7 +189,6 @@
             pointer-events: none; 
         }
 
-        /* סגנון טקסט בתוך הסוללה שיהיה קריא גם על ירוק וגם על שחור */
         .battery-text {
             text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
         }
@@ -192,13 +196,11 @@
 </head>
 <body class="p-4 md:p-10 safe-area-inset relative">
 
-    <!-- רקעים דינמיים -->
     <div id="themeBackground" class="fixed inset-0 z-[-2] transition-colors duration-700 bg-gradient-to-br from-[#1a1a2e] to-[#16213e]"></div>
     <div id="galleryPattern" class="fixed inset-0 z-[-1] opacity-0 transition-opacity duration-700 pointer-events-none bg-gallery-pattern"></div>
 
     <div id="toast" class="toast-msg font-bold text-center"></div>
 
-    <!-- מודאל הוספת מטרה / סוללה חדשה (חדש!) -->
     <div id="addGoalModal" class="fixed inset-0 z-[75] flex items-center justify-center hidden modal-overlay transition-opacity">
         <div class="glass-card p-8 max-w-sm w-full border-green-500/30 border shadow-2xl">
             <div class="text-5xl text-center mb-2">🔋</div>
@@ -208,13 +210,18 @@
             <input type="text" id="goalTitle" placeholder="שם המטרה (למשל: סוני 5, טיול)" class="input-style mb-4">
             <input type="number" id="goalTarget" placeholder="סכום יעד כולל (למשל: 6720)" class="input-style mb-4">
             
-            <div class="flex gap-2 mb-6">
+            <div class="flex gap-2 mb-4">
                 <input type="number" id="goalDeposit" placeholder="סכום הפקדה (למשל: 20)" class="input-style flex-1">
                 <select id="goalFreq" class="input-style flex-1 !py-0 text-sm">
                     <option value="daily">כל יום</option>
                     <option value="weekly">כל שבוע</option>
                     <option value="monthly">כל חודש</option>
                 </select>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-xs text-gray-400 mb-1 mr-1 text-right">שעת הפקדה (אופציונלי)</label>
+                <input type="time" id="goalTime" class="input-style" dir="ltr">
             </div>
             
             <div class="flex gap-2">
@@ -224,7 +231,6 @@
         </div>
     </div>
 
-    <!-- מודאל אימות אימייל -->
     <div id="verificationModal" class="fixed inset-0 z-[90] flex items-center justify-center hidden modal-overlay">
         <div class="glass-card p-8 max-w-sm w-full border-blue-500/30 border shadow-2xl text-center">
             <div class="text-5xl mb-4">📧</div>
@@ -236,7 +242,6 @@
         </div>
     </div>
 
-    <!-- מודאל פרופילים -->
     <div id="profilesModal" class="fixed inset-0 z-[60] flex items-center justify-center hidden modal-overlay transition-opacity">
         <div class="p-8 max-w-4xl w-full text-center">
             <h2 class="text-4xl md:text-5xl font-bold mb-12 text-white">מי עובד עכשיו?</h2>
@@ -245,7 +250,6 @@
         </div>
     </div>
 
-    <!-- מודאל הוספת פרופיל -->
     <div id="addProfileModal" class="fixed inset-0 z-[70] flex items-center justify-center hidden modal-overlay">
         <div class="glass-card p-8 max-w-md w-full border-blue-500/30 border shadow-2xl">
             <h3 id="addProfileTitle" class="text-2xl font-bold mb-2 text-center">פרופיל משתמש חדש</h3>
@@ -254,12 +258,11 @@
                 <input type="date" id="newProfileBirth" class="input-style">
                 <button id="addProfileBtn" onclick="window.submitNewProfile()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl mt-4 transition-all">שמור והמשך</button>
                 <button id="deleteProfileBtn" onclick="window.deleteProfile()" class="hidden w-full bg-red-600/20 text-red-400 border border-red-600/30 hover:bg-red-600 hover:text-white font-bold py-3 rounded-xl transition-all mt-2">מחק פרופיל</button>
-                <button onclick="window.closeAddProfile()" class="w-full text-gray-500 text-sm py-2 hover:underline text-center block mt-2">ביטול</button>
+                <button id="cancelAddProfileBtn" onclick="window.closeAddProfile()" class="w-full text-gray-500 text-sm py-2 hover:underline text-center block mt-2">ביטול</button>
             </div>
         </div>
     </div>
 
-    <!-- מודאל התחברות -->
     <div id="authModal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
         <div class="glass-card p-8 max-w-md w-full border-blue-500/30 border shadow-2xl">
             <div id="authChoice">
@@ -341,7 +344,6 @@
         </div>
     </div>
 
-    <!-- מודאל מצלמה -->
     <div id="cameraModal" class="fixed inset-0 z-[100] hidden modal-overlay p-4 flex-col justify-center items-center transition-all">
         <div class="glass-card w-full max-w-lg mx-auto p-4 flex flex-col relative shadow-2xl border-pink-500/30 border">
             <div class="flex justify-between items-center mb-4">
@@ -359,7 +361,6 @@
         </div>
     </div>
 
-    <!-- === בר ניווט עליון === -->
     <nav id="mainNav" class="max-w-6xl mx-auto w-full flex justify-between items-center mb-6 glass-card px-6 py-4 gap-4 relative z-40 transition-colors duration-500 border border-white/10 shadow-lg">
         <div class="flex items-center gap-4">
             <button id="appMenuBtn" onclick="window.toggleAppMenu(event)" class="w-12 h-12 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
@@ -399,6 +400,16 @@
                     <div class="w-12 h-12 bg-pink-500 rounded-full flex items-center justify-center text-2xl mb-2 shadow-lg">🖼️</div>
                     <span class="text-[10px] text-center font-bold text-gray-200">Smart Gallery</span>
                 </div>
+                
+                <div onclick="window.openApp('localfiles')" class="app-item flex flex-col items-center p-2 rounded-xl cursor-pointer">
+                    <div class="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center text-2xl mb-2 shadow-lg border border-white/20">📱</div>
+                    <span class="text-[10px] text-center font-bold text-gray-200">Smart Files</span>
+                </div>
+                <div onclick="window.openApp('cloudfiles')" class="app-item flex flex-col items-center p-2 rounded-xl cursor-pointer">
+                    <div class="w-12 h-12 bg-sky-500 rounded-full flex items-center justify-center text-2xl mb-2 shadow-lg border border-white/20">☁️</div>
+                    <span class="text-[10px] text-center font-bold text-gray-200">Cloud Files</span>
+                </div>
+
                 <div onclick="window.openApp('editor')" class="app-item flex flex-col items-center p-2 rounded-xl cursor-pointer opacity-50">
                     <div class="w-12 h-12 bg-indigo-500 rounded-full flex items-center justify-center text-2xl mb-2 shadow-lg">✏️</div>
                     <span class="text-[10px] text-center font-bold text-gray-200">Smart Editor</span>
@@ -431,7 +442,6 @@
         </div>
     </nav>
 
-    <!-- === עמוד הנחיתה (Launcher) === -->
     <div id="launcherScreen" class="max-w-6xl mx-auto w-full flex-1 flex flex-col items-center py-10 animate-fade-in relative z-10">
         
         <div class="w-full flex flex-col lg:flex-row items-center gap-12">
@@ -443,7 +453,6 @@
                     סביבת העבודה החכמה והמתקדמת ביותר. כל הכלים שאתה צריך, מקושרים יחד תחת ענן אחד מאובטח, עם ניהול הרשאות מלא.
                 </p>
 
-                <!-- חיפוש -->
                 <div class="w-full max-w-lg mx-auto lg:mx-0 mt-6 mb-8 relative group">
                     <div class="absolute inset-0 bg-blue-500/20 blur-xl rounded-full group-hover:bg-blue-500/40 transition-all duration-500"></div>
                     <div class="relative flex items-center bg-[#0f111a] border-2 border-blue-500 rounded-full shadow-2xl overflow-hidden p-1 transition-transform focus-within:scale-105">
@@ -458,7 +467,6 @@
                 </button>
             </div>
             
-            <!-- ציור ראשי -->
             <div class="flex-1 w-full flex justify-center lg:justify-end">
                 <div class="relative w-full max-w-lg">
                     <div class="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full"></div>
@@ -484,9 +492,7 @@
             </div>
         </div>
 
-        <!-- אזור הסברים דינמי נגלל -->
         <div class="mt-32 w-full space-y-32 pb-20">
-            <!-- הסבר 1 -->
             <div class="flex flex-col md:flex-row items-center gap-12 reveal-on-scroll">
                 <div class="flex-1 text-center md:text-right">
                     <h3 class="text-3xl font-bold text-blue-400 mb-4 flex items-center justify-center md:justify-start gap-3"><span class="text-4xl text-white">☁️</span> סנכרון ענן חכם</h3>
@@ -508,7 +514,6 @@
                 </div>
             </div>
 
-            <!-- הסבר 2 -->
             <div class="flex flex-col md:flex-row-reverse items-center gap-12 reveal-on-scroll">
                 <div class="flex-1 text-center md:text-right">
                     <h3 class="text-3xl font-bold text-purple-400 mb-4 flex items-center justify-center md:justify-start gap-3"><span class="text-4xl text-white">🎨</span> כלים מתקדמים ליוצרים</h3>
@@ -528,7 +533,6 @@
                 </div>
             </div>
 
-            <!-- הסבר 3 -->
             <div class="flex flex-col md:flex-row items-center gap-12 reveal-on-scroll">
                 <div class="flex-1 text-center md:text-right">
                     <h3 class="text-3xl font-bold text-emerald-400 mb-4 flex items-center justify-center md:justify-start gap-3"><span class="text-4xl text-white">👥</span> ניהול חשבונות חכם</h3>
@@ -578,14 +582,13 @@
                     <button onclick="window.addTask()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-lg hover:bg-blue-500 transition-all">הוסף למשימות</button>
                 </div>
 
-                <!-- מטרות שלי (סוללות חיסכון) -->
+                <!-- מטרות שלי -->
                 <div class="glass-card p-6 border-green-500/20 border shadow-xl">
                     <h2 class="text-xl font-bold mb-4 text-right flex items-center gap-2 text-green-400">
                         <span class="w-2 h-6 bg-green-500 rounded-full"></span>
                         המטרות שלי 🔋
                     </h2>
                     <div id="goalsListContainer" class="space-y-4 mb-4">
-                        <!-- מטרות יטענו לכאן -->
                     </div>
                     <button onclick="window.openAddGoalModal()" class="w-full bg-green-600/20 text-green-400 font-bold py-3 border border-green-500/30 rounded-lg shadow-sm hover:bg-green-600 hover:text-white transition-all">+ מטרה חדשה</button>
                 </div>
@@ -650,7 +653,6 @@
 
         <div class="glass-card p-8 max-w-3xl mx-auto w-full shadow-2xl border border-emerald-500/20">
             <div id="accountManagerContent" class="text-center">
-                <!-- יתמלא דינמית דרך JS -->
             </div>
         </div>
     </div>
@@ -714,11 +716,12 @@
                     <span>📸</span> צלם
                 </button>
                 <button onclick="window.triggerImageUpload()" class="flex-1 md:flex-none bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
-                    <span>+</span> העלה
+                    <span>+</span> העלה תמונה
                 </button>
             </div>
             
-            <input type="file" id="galleryUploadInput" accept="image/*" class="hidden" onchange="window.handleImageUpload(event)">
+            <!-- משתמש בפונקציית העלאת הענן שלנו -->
+            <input type="file" id="galleryUploadInput" accept="image/*" class="hidden" onchange="window.handleCloudUpload(event, true)">
         </header>
 
         <div class="glass-card p-6 shadow-xl flex-1 border border-pink-500/20 min-h-[500px] flex flex-col">
@@ -727,13 +730,102 @@
             </div>
             
             <div id="galleryGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 hidden">
-                <!-- יתמלא דינמית מהענן -->
             </div>
 
             <div id="emptyGalleryMsg" class="text-center text-gray-500 mt-24 flex-1 flex flex-col justify-center items-center">
                 <div class="text-6xl mb-4 opacity-50">📸</div>
                 <p class="text-xl font-bold text-gray-300">הגלריה שלך ריקה</p>
                 <p class="text-sm mt-2">לחץ על "העלה תמונה" או "צלם" כדי להתחיל לשמור זיכרונות!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- === מסך קבצים מקומיים (Smart Files) === -->
+    <div id="localfilesAppScreen" class="max-w-6xl mx-auto w-full flex-1 hidden flex-col animate-fade-in">
+        <header class="mb-8 text-center md:text-right">
+            <h1 class="text-3xl font-extrabold text-amber-500 flex items-center justify-center md:justify-start gap-3">
+                <span>📱</span> My Smart Files
+            </h1>
+            <p class="text-gray-400 mt-2 text-sm">גישה לקבצים המקומיים של המכשיר שלך. (מותאם למובייל ולמחשבים ניידים)</p>
+        </header>
+
+        <div class="glass-card p-10 shadow-xl flex-1 border border-amber-500/20 flex flex-col items-center justify-center text-center">
+            <div class="w-24 h-24 bg-amber-500/10 rounded-full flex items-center justify-center text-5xl mb-6 border border-amber-500/30">
+                📁
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-4">ניהול קבצים מקומי</h2>
+            <p class="text-gray-400 max-w-md mx-auto mb-8">
+                אפליקציה זו מיועדת לעבוד ישירות על המכשיר שלך ללא תלות בענן. 
+                כדי לקבל את החוויה המלאה וניהול עמוק של הקבצים, מומלץ להוריד את האפליקציה המלאה למכשיר.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+                <button onclick="document.getElementById('nativeFilePicker').click()" class="flex-1 bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+                    <span>🔍</span> סייר בקבצי המכשיר
+                </button>
+                <input type="file" id="nativeFilePicker" multiple class="hidden">
+                
+                <button onclick="window.showToast('חנות האפליקציות של Smart Workspace תיפתח בקרוב! 🚀', false)" class="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 px-6 rounded-xl shadow-lg border border-white/10 transition-all flex items-center justify-center gap-2">
+                    <span>⬇️</span> הורד אפליקציה לנייד
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- === מסך קבצי ענן (Cloud Files) === -->
+    <div id="cloudfilesAppScreen" class="max-w-6xl mx-auto w-full flex-1 hidden flex-col animate-fade-in">
+        <header class="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="text-center md:text-right">
+                <h1 class="text-3xl font-extrabold text-sky-400 flex items-center justify-center md:justify-start gap-3">
+                    <span>☁️</span> My Cloud Files
+                </h1>
+                <p class="text-gray-400 mt-2 text-sm">הכונן הדיגיטלי הפרטי שלך. מסנכרן את כל האפליקציות במקום אחד.</p>
+            </div>
+            <button onclick="document.getElementById('cloudUploadInput').click()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all w-full md:w-auto flex items-center justify-center gap-2">
+                <span>+</span> העלה קובץ לענן
+            </button>
+            <input type="file" id="cloudUploadInput" class="hidden" onchange="window.handleCloudUpload(event)">
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div class="lg:col-span-1">
+                <div class="glass-card p-6 border border-sky-500/20 shadow-xl h-full">
+                    <h3 class="font-bold text-lg mb-4 text-sky-300 border-b border-white/10 pb-2">מצב אחסון 📊</h3>
+                    
+                    <div class="mb-6">
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-gray-400">בשימוש</span>
+                            <span class="font-bold text-white" id="storageText">0 MB / 15 GB</span>
+                        </div>
+                        <div class="w-full bg-white/10 rounded-full h-2.5 mb-4 overflow-hidden">
+                            <div id="storageMeterFill" class="bg-sky-500 h-2.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                        </div>
+                        <button class="w-full bg-white/5 hover:bg-white/10 text-sky-300 text-xs font-bold py-2 rounded border border-sky-500/20 transition-all">שדרוג נפח אחסון</button>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="p-2 bg-white/5 rounded cursor-pointer transition-colors flex items-center gap-3">
+                            <span>📂</span> הכל מסונכרן ומוגן
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-3">
+                <div class="glass-card p-6 min-h-[500px] shadow-xl border border-white/5">
+                    <div class="flex justify-between items-center mb-2 border-b border-white/10 pb-4">
+                        <h2 class="text-xl font-bold text-white">הקבצים שלי</h2>
+                    </div>
+                    
+                    <!-- לכאן יוזרקו כל הקבצים מכל האפליקציות -->
+                    <div id="cloudFilesContainer" class="flex-1 flex flex-col gap-4"></div>
+
+                    <div id="emptyCloudFilesMsg" class="text-center text-gray-500 mt-20 hidden">
+                        <div class="text-6xl mb-4 opacity-50">🌩️</div>
+                        <p class="text-xl font-bold text-gray-300">כונן הענן שלך ריק</p>
+                        <p class="text-sm mt-2 max-w-sm mx-auto">צור מסמכים, שמור משימות, או העלה קבצים כדי לראות אותם מופיעים כאן בסנכרון מלא.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -759,6 +851,10 @@
         let unsubscribeDocs = null;
         window.editingDocId = null;
 
+        // מערכת אחסון ענן מלאה (הקבצים שמועלים כבייס64)
+        let allFiles = [];
+        let unsubscribeFiles = null;
+
         const forbiddenWords = ['סמים', 'הימורים', 'אלימות', 'פוגעני', 'קללה'];
         const gradients = [
             'from-blue-500 to-purple-600',
@@ -775,7 +871,7 @@
             setTimeout(() => toast.classList.remove('show'), 4000);
         };
 
-        const fetchWithRetry = async (url, payload, retries = 3) => {
+        window.fetchWithRetry = async (url, payload, retries = 3) => {
             for (let i = 0; i <= retries; i++) {
                 try {
                     const response = await fetch(url, {
@@ -812,32 +908,62 @@
             }
         };
 
+        // פונקציית עזר להמרת קובץ למחרוזת שניתן לשמור ב-Firestore
+        window.fileToBase64 = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+
         window.openAddGoalModal = () => {
-            document.getElementById('goalTitle').value = '';
-            document.getElementById('goalTarget').value = '';
-            document.getElementById('goalDeposit').value = '';
-            document.getElementById('addGoalModal').classList.remove('hidden');
-            document.getElementById('addGoalModal').classList.add('flex');
+            const titleEl = document.getElementById('goalTitle');
+            const targetEl = document.getElementById('goalTarget');
+            const depositEl = document.getElementById('goalDeposit');
+            const timeEl = document.getElementById('goalTime');
+            
+            if(titleEl) titleEl.value = '';
+            if(targetEl) targetEl.value = '';
+            if(depositEl) depositEl.value = '';
+            if(timeEl) timeEl.value = '';
+            
+            const modal = document.getElementById('addGoalModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
         };
 
         window.closeAddGoalModal = () => {
-            document.getElementById('addGoalModal').classList.add('hidden');
-            document.getElementById('addGoalModal').classList.remove('flex');
+            const modal = document.getElementById('addGoalModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
         };
 
         window.submitNewGoal = async () => {
-            const title = document.getElementById('goalTitle').value.trim();
-            const target = parseFloat(document.getElementById('goalTarget').value);
-            const deposit = parseFloat(document.getElementById('goalDeposit').value);
-            const freq = document.getElementById('goalFreq').value;
+            const titleEl = document.getElementById('goalTitle');
+            const targetEl = document.getElementById('goalTarget');
+            const depositEl = document.getElementById('goalDeposit');
+            const freqEl = document.getElementById('goalFreq');
+            const timeEl = document.getElementById('goalTime');
+            
+            const title = titleEl ? titleEl.value.trim() : "";
+            const target = targetEl ? parseFloat(targetEl.value) : NaN;
+            const deposit = depositEl ? parseFloat(depositEl.value) : NaN;
+            const freq = freqEl ? freqEl.value : "daily";
+            const chargeTime = timeEl ? timeEl.value : "";
 
             if(!title || isNaN(target) || isNaN(deposit)) {
                 return window.showToast("נא למלא את כל השדות בצורה תקינה", true);
             }
 
             const btn = document.getElementById('addGoalBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loader"></span> שומר...';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loader"></span> שומר...';
+            }
 
             const user = window.auth.currentUser;
             if (user && currentProfileId && localStorage.getItem('shoval_simulated_logout') !== 'true') {
@@ -849,21 +975,32 @@
                         currentAmount: 0,
                         depositAmount: deposit,
                         frequency: freq,
+                        chargeTime: chargeTime || null,
                         createdAt: new Date().toISOString()
                     });
                     window.closeAddGoalModal();
                     window.showToast("המטרה נשמרה! תתחיל להטעין את הסוללה 🔋", false);
-                    window.logActivity("הגדיר מטרה חדשה: " + title);
+                    if(window.logActivity) window.logActivity("הגדיר מטרה חדשה: " + title);
                 } catch(e) {
                     window.showToast("שגיאה בשמירת המטרה", true);
                 }
             } else {
-                guestGoals.push({ id: Date.now().toString(), title, targetAmount: target, currentAmount: 0, depositAmount: deposit, frequency: freq });
+                guestGoals.push({ 
+                    id: Date.now().toString(), 
+                    title, 
+                    targetAmount: target, 
+                    currentAmount: 0, 
+                    depositAmount: deposit, 
+                    frequency: freq,
+                    chargeTime: chargeTime || null
+                });
                 window.closeAddGoalModal();
-                window.renderGuestGoals();
+                if(window.renderGuestGoals) window.renderGuestGoals();
             }
-            btn.disabled = false;
-            btn.textContent = "צור סוללת מטרה";
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = "צור סוללת מטרה";
+            }
         };
 
         window.chargeGoal = async (goalId, isGuest = false) => {
@@ -871,7 +1008,7 @@
                 const goal = guestGoals.find(g => g.id === goalId);
                 if (goal && goal.currentAmount < goal.targetAmount) {
                     goal.currentAmount = Math.min(goal.targetAmount, goal.currentAmount + goal.depositAmount);
-                    window.renderGuestGoals();
+                    if(window.renderGuestGoals) window.renderGuestGoals();
                     window.showToast("הסוללה הוטענה! כל הכבוד! ⚡", false);
                 }
                 return;
@@ -902,7 +1039,7 @@
         window.deleteGoal = async (goalId, isGuest = false) => {
             if(isGuest) {
                 guestGoals = guestGoals.filter(g => g.id !== goalId);
-                window.renderGuestGoals();
+                if(window.renderGuestGoals) window.renderGuestGoals();
                 return;
             }
             const user = window.auth.currentUser;
@@ -914,7 +1051,7 @@
             }
         };
 
-        const renderGoalsList = (goalsArray, isGuest = false) => {
+        window.renderGoalsList = (goalsArray, isGuest = false) => {
             const container = document.getElementById('goalsListContainer');
             if (!container) return;
             
@@ -927,13 +1064,15 @@
             goalsArray.forEach(g => {
                 let percent = Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100));
                 
+                let timeString = g.chargeTime ? ` ב-${g.chargeTime}` : '';
+                
                 const div = document.createElement('div');
                 div.className = "bg-white/5 p-4 rounded-xl border border-white/10 relative overflow-hidden group";
                 
                 div.innerHTML = `
                     <div class="flex justify-between items-end mb-3">
                         <span class="font-bold text-white text-lg">${g.title}</span>
-                        <span class="text-xs text-green-400 bg-green-500/20 px-2 py-1 rounded-full font-bold">${g.depositAmount} ₪ להפקדה</span>
+                        <span class="text-xs text-green-400 bg-green-500/20 px-2 py-1 rounded-full font-bold">${g.depositAmount} ₪ להפקדה${timeString}</span>
                     </div>
                     
                     <div class="flex items-center w-full mb-3" dir="ltr">
@@ -955,7 +1094,7 @@
             });
         };
 
-        const listenToCloudGoals = (userId, profileId) => {
+        window.listenToCloudGoals = (userId, profileId) => {
             if (unsubscribeGoals) unsubscribeGoals();
             const goalsRef = window.collection(window.db, "artifacts", window.appId, "users", userId, `goals_${profileId}`);
             
@@ -963,11 +1102,219 @@
                 allGoals = [];
                 snapshot.forEach(doc => allGoals.push({ id: doc.id, ...doc.data() }));
                 allGoals.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
-                renderGoalsList(allGoals, false);
+                window.renderGoalsList(allGoals, false);
             }, (error) => console.error("Goals sync error:", error));
         };
 
-        window.renderGuestGoals = () => renderGoalsList(guestGoals, true);
+        window.renderGuestGoals = () => window.renderGoalsList(guestGoals, true);
+
+        // --- מערכת קבצי הענן והגלריה משולבות יחד ---
+        window.handleCloudUpload = async (event, forceImage = false) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // הגבלת גודל קובץ כדי לא לקרוס את ה-Firestore (כיוון שאנחנו לא משתמשים ב-Storage אמיתי כרגע)
+            if (file.size > 800 * 1024) {
+                return window.showToast("הקובץ גדול מדי. לא ניתן לשמור קבצים מעל 800KB בענן החינמי.", true);
+            }
+
+            const user = window.auth.currentUser;
+            if (!user || !currentProfileId || localStorage.getItem('shoval_simulated_logout') === 'true') {
+                return window.showToast("יש להתחבר לחשבון ענן כדי להעלות קבצים.", true);
+            }
+
+            window.showToast("מתחיל העלאה מוצפנת לענן... ☁️", false);
+            
+            try {
+                const base64Data = await window.fileToBase64(file);
+                const fileId = 'file_' + Date.now().toString();
+                let fileType = file.type.split('/')[0]; // למשל "image" או "application"
+                if (forceImage) fileType = 'image';
+
+                await window.setDoc(window.doc(window.db, "artifacts", window.appId, "users", user.uid, `files_${currentProfileId}`, fileId), {
+                    name: file.name,
+                    type: fileType,
+                    fullType: file.type,
+                    size: file.size,
+                    data: base64Data,
+                    createdAt: new Date().toISOString()
+                });
+                
+                window.showToast("הקובץ נשמר בהצלחה בענן! ✅", false);
+                if (window.logActivity) window.logActivity("העלה קובץ חדש לענן: " + file.name);
+            } catch (e) {
+                console.error(e);
+                window.showToast("שגיאה בהעלאת הקובץ", true);
+            }
+            
+            // איפוס האינפוט
+            event.target.value = '';
+        };
+
+        window.deleteCloudFile = async (fileId) => {
+            const user = window.auth.currentUser;
+            if (!user || !currentProfileId) return;
+            try {
+                await window.deleteDoc(window.doc(window.db, "artifacts", window.appId, "users", user.uid, `files_${currentProfileId}`, fileId));
+                window.showToast("הקובץ נמחק מהענן לתמיד", false);
+                if(window.logActivity) window.logActivity("מחק/ה קובץ מהענן");
+            } catch(e) {
+                window.showToast("שגיאה במחיקת הקובץ", true);
+            }
+        };
+
+        window.listenToCloudFiles = (userId, profileId) => {
+            if (unsubscribeFiles) unsubscribeFiles();
+            const filesRef = window.collection(window.db, "artifacts", window.appId, "users", userId, `files_${profileId}`);
+            
+            unsubscribeFiles = window.onSnapshot(filesRef, (snapshot) => {
+                allFiles = [];
+                snapshot.forEach(doc => allFiles.push({ id: doc.id, ...doc.data() }));
+                allFiles.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+                
+                if (window.renderCloudFiles) window.renderCloudFiles();
+                if (window.renderGallery) window.renderGallery();
+            }, (error) => console.error("Files sync error:", error));
+        };
+
+        window.updateStorageMeter = () => {
+            let totalSize = 0;
+            // הוספת משקלים משוערים לדברים שלא שוקלים הרבה במציאות אבל תופסים מקום הגיוני
+            totalSize += allDocs.length * 5120; // 5KB לכל מסמך טקסט
+            totalSize += allTasks.length * 1024; // 1KB לכל משימה
+            
+            // חישוב המשקל האמיתי של הקבצים שהעלינו
+            allFiles.forEach(f => {
+                totalSize += (f.size || 0);
+            });
+
+            const maxStorage = 15 * 1024 * 1024 * 1024; // 15 GB
+            let percentage = (totalSize / maxStorage) * 100;
+            
+            // כדי שיראו קצת צבע גם כשהנפח קטן מאוד
+            if(totalSize > 0 && percentage < 1) percentage = 1;
+
+            let displaySize = (totalSize / (1024 * 1024)).toFixed(2) + ' MB';
+            if (totalSize === 0) displaySize = '0 MB';
+
+            const meterEl = document.getElementById('storageMeterFill');
+            const textEl = document.getElementById('storageText');
+            
+            if (meterEl) meterEl.style.width = percentage + '%';
+            if (textEl) textEl.textContent = `${displaySize} / 15 GB`;
+        };
+
+        window.renderCloudFiles = () => {
+            const container = document.getElementById('cloudFilesContainer');
+            const emptyMsg = document.getElementById('emptyCloudFilesMsg');
+            if (!container || !emptyMsg) return;
+
+            const totalItems = allDocs.length + allTasks.length + allFiles.length;
+            
+            if (totalItems === 0) {
+                emptyMsg.classList.remove('hidden');
+                container.innerHTML = '';
+                window.updateStorageMeter();
+                return;
+            }
+
+            emptyMsg.classList.add('hidden');
+            let html = '';
+
+            // --- מדור מסמכים ---
+            if (allDocs.length > 0) {
+                html += `<h3 class="font-bold text-teal-400 mt-6 mb-3 border-b border-white/10 pb-2">📄 מסמכים מקושרים (Smart Docs)</h3>
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">`;
+                allDocs.forEach(d => {
+                    html += `
+                        <div class="bg-white/5 p-3 rounded-lg border border-white/10 flex items-center justify-between hover:bg-white/10 transition">
+                            <span class="truncate ml-2 text-gray-200 text-sm">${d.title}</span>
+                            <button onclick="window.openApp('docs'); window.openDocument('${d.id}')" class="text-xs bg-teal-600/20 hover:bg-teal-600/40 text-teal-400 px-3 py-1 rounded transition-colors">פתח מסמך</button>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+
+            // --- מדור גלריה ---
+            const images = allFiles.filter(f => f.type === 'image');
+            if (images.length > 0) {
+                html += `<h3 class="font-bold text-pink-400 mt-6 mb-3 border-b border-white/10 pb-2">🖼️ תמונות מסונכרנות (Smart Gallery)</h3>
+                         <div class="grid grid-cols-3 md:grid-cols-5 gap-3">`;
+                images.forEach(f => {
+                    html += `
+                        <div class="bg-black/50 rounded-lg border border-white/10 aspect-square flex items-center justify-center overflow-hidden group relative">
+                            <img src="${f.data}" class="object-cover w-full h-full" />
+                            <button onclick="window.deleteCloudFile('${f.id}')" class="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow text-xs">x</button>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+
+            // --- מדור משימות ---
+            if (allTasks.length > 0) {
+                html += `<h3 class="font-bold text-blue-400 mt-6 mb-3 border-b border-white/10 pb-2">📝 פתקים ומשימות (Smart Tasks)</h3>
+                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">`;
+                allTasks.forEach(t => {
+                    let display = t.isImage ? `פתק מצויר בכתב יד 🖊️` : t.text;
+                    html += `
+                        <div class="bg-white/5 p-3 rounded-lg border border-white/10 truncate text-gray-300 text-sm hover:bg-white/10 transition cursor-pointer" onclick="window.openApp('tasks')">
+                            ${display}
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+
+            // --- מדור קבצים אחרים שהועלו ---
+            const others = allFiles.filter(f => f.type !== 'image');
+            if (others.length > 0) {
+                html += `<h3 class="font-bold text-amber-400 mt-6 mb-3 border-b border-white/10 pb-2">📁 קבצים כלליים בענן</h3>
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">`;
+                others.forEach(f => {
+                    html += `
+                        <div class="bg-white/5 p-3 rounded-lg border border-white/10 flex items-center justify-between hover:bg-white/10 transition">
+                            <div class="truncate ml-2 text-sm text-gray-200 w-3/4" dir="ltr" style="text-align: left;">${f.name}</div>
+                            <button onclick="window.deleteCloudFile('${f.id}')" class="text-xs text-red-400/70 hover:text-red-400 transition-colors">מחק</button>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+
+            container.innerHTML = html;
+            window.updateStorageMeter();
+        };
+
+        window.renderGallery = () => {
+            const grid = document.getElementById('galleryGrid');
+            const empty = document.getElementById('emptyGalleryMsg');
+            if(!grid || !empty) return;
+
+            const images = allFiles.filter(f => f.type === 'image');
+            
+            if(images.length === 0) {
+                empty.classList.remove('hidden');
+                grid.classList.add('hidden');
+            } else {
+                empty.classList.add('hidden');
+                grid.classList.remove('hidden');
+                grid.innerHTML = '';
+                
+                images.forEach(img => {
+                    grid.innerHTML += `
+                        <div class="relative group rounded-xl overflow-hidden shadow-lg border border-white/10 aspect-square">
+                            <img src="${img.data}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                                <span class="text-xs text-white bg-black/50 px-2 py-1 rounded truncate w-10/12 text-center" dir="ltr">${img.name}</span>
+                                <button onclick="window.deleteCloudFile('${img.id}')" class="bg-red-600 hover:bg-red-500 text-white p-3 rounded-full shadow-lg transition-transform hover:scale-110">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        };
 
         window.triggerImageUpload = () => {
             const user = window.auth.currentUser;
@@ -976,18 +1323,9 @@
                 window.openModal();
                 return;
             }
-            document.getElementById('galleryUploadInput').click();
+            const inputEl = document.getElementById('galleryUploadInput');
+            if (inputEl) inputEl.click();
         };
-
-        window.handleImageUpload = (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            window.showToast(`מתחיל להכין את התמונה "${file.name}"... (לוגיקת שמירה תתווסף בהמשך)`, false);
-            event.target.value = ''; 
-        };
-
-        let currentCameraStream = null;
-        let usingFrontCamera = false; 
 
         window.openCamera = async () => {
             const user = window.auth.currentUser;
@@ -997,8 +1335,11 @@
                 return;
             }
             
-            document.getElementById('cameraModal').classList.remove('hidden');
-            document.getElementById('cameraModal').classList.add('flex');
+            const modal = document.getElementById('cameraModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
             await window.startCameraStream();
         };
 
@@ -1015,12 +1356,13 @@
             try {
                 currentCameraStream = await navigator.mediaDevices.getUserMedia(constraints);
                 const video = document.getElementById('cameraVideo');
-                video.srcObject = currentCameraStream;
-                
-                if(usingFrontCamera) {
-                    video.style.transform = "scaleX(-1)";
-                } else {
-                    video.style.transform = "scaleX(1)";
+                if (video) {
+                    video.srcObject = currentCameraStream;
+                    if(usingFrontCamera) {
+                        video.style.transform = "scaleX(-1)";
+                    } else {
+                        video.style.transform = "scaleX(1)";
+                    }
                 }
             } catch (err) {
                 console.error("Camera access error:", err);
@@ -1039,15 +1381,18 @@
                 currentCameraStream.getTracks().forEach(track => track.stop());
                 currentCameraStream = null;
             }
-            document.getElementById('cameraModal').classList.add('hidden');
-            document.getElementById('cameraModal').classList.remove('flex');
+            const modal = document.getElementById('cameraModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
         };
 
-        window.takePhoto = () => {
+        window.takePhoto = async () => {
             const video = document.getElementById('cameraVideo');
             const canvas = document.getElementById('cameraCanvas');
             
-            if (!video.videoWidth) return;
+            if (!video || !canvas || !video.videoWidth) return;
 
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
@@ -1062,7 +1407,27 @@
             const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
             
             window.closeCamera();
-            window.showToast("תמונה צולמה בהצלחה! 📸 (מנגנון השמירה לענן בבנייה)", false);
+            
+            // שומרים את התמונה ישירות לענן
+            const user = window.auth.currentUser;
+            if (user && currentProfileId) {
+                window.showToast("מעלה את התמונה לענן...", false);
+                try {
+                    const fileId = 'img_' + Date.now().toString();
+                    await window.setDoc(window.doc(window.db, "artifacts", window.appId, "users", user.uid, `files_${currentProfileId}`, fileId), {
+                        name: "תמונה ממצלמה " + new Date().toLocaleTimeString('he-IL'),
+                        type: 'image',
+                        fullType: 'image/jpeg',
+                        size: Math.round(dataUrl.length * 0.75), // משקל משוער
+                        data: dataUrl,
+                        createdAt: new Date().toISOString()
+                    });
+                    window.showToast("התמונה צולמה ונשמרה בהצלחה בגלריה! 📸", false);
+                    if(window.logActivity) window.logActivity("צילם/ה תמונה חדשה למערכת");
+                } catch(e) {
+                    window.showToast("שגיאה בשמירת התמונה", true);
+                }
+            }
         };
 
         window.checkVerification = async () => {
@@ -1070,7 +1435,8 @@
             if (user) {
                 await user.reload(); 
                 if (user.emailVerified) {
-                    document.getElementById('verificationModal').classList.add('hidden');
+                    const modal = document.getElementById('verificationModal');
+                    if(modal) modal.classList.add('hidden');
                     window.showToast("האימייל אומת בהצלחה! אפשר להתחיל לחפש.", false);
                 } else {
                     window.showToast("האימייל עדיין לא אומת. בדוק את תיבת הדואר (וגם את הספאם).", true);
@@ -1106,7 +1472,7 @@
             const isForbidden = forbiddenWords.some(word => query.includes(word));
             if (isForbidden) {
                 window.showToast("חיפוש מונחים אלו נחסם על ידי מערכת ההגנה 🛡️", true);
-                window.logActivity("ניסיון חיפוש חסום: " + query);
+                if (window.logActivity) window.logActivity("ניסיון חיפוש חסום: " + query);
                 if(launcherInput) launcherInput.value = "";
                 if(innerInput) innerInput.value = "";
                 return;
@@ -1121,7 +1487,8 @@
 
             await user.reload(); 
             if (!user.emailVerified) {
-                document.getElementById('verificationModal').classList.remove('hidden');
+                const modal = document.getElementById('verificationModal');
+                if (modal) modal.classList.remove('hidden');
                 return;
             }
 
@@ -1130,6 +1497,8 @@
             if(launcherInput) launcherInput.value = ""; 
             
             const resultsContainer = document.getElementById('searchResults');
+            if (!resultsContainer) return;
+
             resultsContainer.innerHTML = `
                 <div class="flex flex-col items-center justify-center py-20 text-center">
                     <div class="w-16 h-16 border-4 border-white/10 border-t-blue-500 rounded-full animate-spin mb-6 shadow-xl"></div>
@@ -1148,7 +1517,7 @@
                 };
 
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${UNIVERSAL_API_KEY}`;
-                const result = await fetchWithRetry(url, payload);
+                const result = await window.fetchWithRetry(url, payload);
                 
                 let text = result.candidates?.[0]?.content?.parts?.[0]?.text || "לא מצאנו תשובה ברורה ברשת.";
                 const attributions = result.candidates?.[0]?.groundingMetadata?.groundingAttributions || [];
@@ -1192,7 +1561,7 @@
                         ${sourcesHtml}
                     </div>
                 `;
-                window.logActivity("חיפש במנוע הפנימי: " + query);
+                if (window.logActivity) window.logActivity("חיפש במנוע הפנימי: " + query);
 
             } catch (e) {
                 console.error("Search Error:", e);
@@ -1220,33 +1589,69 @@
             }
         };
 
+        window.applyTheme = (appId) => {
+            const themeBg = document.getElementById('themeBackground');
+            const nav = document.getElementById('mainNav');
+            const galleryPattern = document.getElementById('galleryPattern');
+
+            const themes = {
+                'launcher': { bg: 'from-[#1a1a2e] to-[#16213e]', nav: 'bg-white/5 border-white/10 shadow-lg shadow-black/50' },
+                'tasks': { bg: 'from-blue-900/30 to-[#16213e]', nav: 'bg-blue-900/40 border-blue-500/30 shadow-2xl shadow-blue-500/30' },
+                'docs': { bg: 'from-teal-900/30 to-[#16213e]', nav: 'bg-teal-900/40 border-teal-500/30 shadow-2xl shadow-teal-500/30' },
+                'accounts': { bg: 'from-emerald-900/30 to-[#16213e]', nav: 'bg-emerald-900/40 border-emerald-500/30 shadow-2xl shadow-emerald-500/30' },
+                'search': { bg: 'from-cyan-900/30 to-[#16213e]', nav: 'bg-cyan-900/40 border-cyan-500/30 shadow-2xl shadow-cyan-500/30' },
+                'settings': { bg: 'from-gray-800/30 to-[#16213e]', nav: 'bg-gray-800/40 border-gray-500/30 shadow-2xl shadow-gray-500/30' },
+                'gallery': { bg: 'from-pink-900/30 to-[#16213e]', nav: 'bg-pink-900/40 border-pink-500/40 shadow-2xl shadow-pink-500/40' },
+                'localfiles': { bg: 'from-amber-900/30 to-[#16213e]', nav: 'bg-amber-900/40 border-amber-500/30 shadow-2xl shadow-amber-500/30' },
+                'cloudfiles': { bg: 'from-sky-900/30 to-[#16213e]', nav: 'bg-sky-900/40 border-sky-500/30 shadow-2xl shadow-sky-500/30' }
+            };
+
+            const t = themes[appId] || themes['launcher'];
+            
+            if (themeBg) themeBg.className = 'fixed inset-0 z-[-2] transition-colors duration-700 bg-gradient-to-br ' + t.bg;
+            if (nav) nav.className = 'max-w-6xl mx-auto w-full flex justify-between items-center mb-6 glass-card px-6 py-4 gap-4 relative z-40 transition-all duration-500 border ' + t.nav;
+
+            if (galleryPattern) {
+                if (appId === 'gallery') {
+                    galleryPattern.classList.remove('opacity-0');
+                    galleryPattern.classList.add('opacity-100');
+                } else {
+                    galleryPattern.classList.add('opacity-0');
+                    galleryPattern.classList.remove('opacity-100');
+                }
+            }
+        };
+
         window.toggleAppMenu = (e) => {
             if(e) e.stopPropagation();
             const btn = document.getElementById('appMenuBtn');
             const drawer = document.getElementById('appDrawer');
             
-            if (btn.classList.contains('menu-open')) {
+            if (btn && btn.classList.contains('menu-open')) {
                 btn.classList.remove('menu-open');
-                drawer.classList.remove('scale-100', 'opacity-100', 'pointer-events-auto');
-            } else {
+                if (drawer) drawer.classList.remove('scale-100', 'opacity-100', 'pointer-events-auto');
+            } else if (btn) {
                 btn.classList.add('menu-open');
-                drawer.classList.add('scale-100', 'opacity-100', 'pointer-events-auto');
+                if (drawer) drawer.classList.add('scale-100', 'opacity-100', 'pointer-events-auto');
             }
         };
 
         window.addEventListener('click', (e) => {
             const drawer = document.getElementById('appDrawer');
             const btn = document.getElementById('appMenuBtn');
-            if (btn && btn.classList.contains('menu-open') && !drawer.contains(e.target) && !btn.contains(e.target)) {
+            if (btn && btn.classList.contains('menu-open') && drawer && !drawer.contains(e.target) && !btn.contains(e.target)) {
                 window.toggleAppMenu();
             }
         });
 
-        const hideAllScreens = () => {
-            document.getElementById('launcherScreen').classList.remove('flex');
-            document.getElementById('launcherScreen').classList.add('hidden');
+        window.hideAllScreens = () => {
+            const launcher = document.getElementById('launcherScreen');
+            if (launcher) {
+                launcher.classList.remove('flex');
+                launcher.classList.add('hidden');
+            }
             
-            const screens = ['tasks', 'docs', 'accounts', 'search', 'settings', 'gallery'];
+            const screens = ['tasks', 'docs', 'accounts', 'search', 'settings', 'gallery', 'localfiles', 'cloudfiles'];
             screens.forEach(app => {
                 const el = document.getElementById(`${app}AppScreen`);
                 if(el) {
@@ -1257,19 +1662,23 @@
         };
 
         window.showLauncher = () => {
-            hideAllScreens();
-            document.getElementById('launcherScreen').classList.remove('hidden');
-            document.getElementById('launcherScreen').classList.add('flex');
+            window.hideAllScreens();
+            const launcher = document.getElementById('launcherScreen');
+            if (launcher) {
+                launcher.classList.remove('hidden');
+                launcher.classList.add('flex');
+            }
             
             const homeBtn = document.getElementById('homeBtn');
             if(homeBtn) homeBtn.classList.add('hidden');
             
-            window.setupScrollAnimations();
+            window.applyTheme('launcher');
+            if (window.setupScrollAnimations) window.setupScrollAnimations();
         };
 
         window.openApp = (appId) => {
             window.toggleAppMenu(); 
-            hideAllScreens();
+            window.hideAllScreens();
 
             const homeBtn = document.getElementById('homeBtn');
             if(homeBtn) homeBtn.classList.remove('hidden');
@@ -1279,14 +1688,20 @@
             if (targetScreen) {
                 targetScreen.classList.remove('hidden');
                 targetScreen.classList.add('flex');
+                
+                window.applyTheme(appId);
 
                 if (appId === 'docs' && window.auth.currentUser && currentProfileId) {
-                    listenToCloudDocs(window.auth.currentUser.uid, currentProfileId);
+                    if (window.listenToCloudDocs) window.listenToCloudDocs(window.auth.currentUser.uid, currentProfileId);
                 } else if (appId === 'accounts') {
-                    window.renderAccountsScreen();
+                    if (window.renderAccountsScreen) window.renderAccountsScreen();
                 } else if (appId === 'search') {
                     const input = document.getElementById('innerSearchInput');
                     if (input) input.focus();
+                } else if (appId === 'cloudfiles') {
+                    if (window.renderCloudFiles) window.renderCloudFiles();
+                } else if (appId === 'gallery') {
+                    if (window.renderGallery) window.renderGallery();
                 }
             } else {
                 window.showToast(`אפליקציית ${appId} תהיה זמינה בשדרוג הבא! 🚀`, false);
@@ -1295,18 +1710,26 @@
         };
 
         window.openAddFolderModal = () => {
-            document.getElementById('newFolderName').value = '';
-            document.getElementById('addFolderModal').classList.remove('hidden');
-            document.getElementById('addFolderModal').classList.add('flex');
+            const fName = document.getElementById('newFolderName');
+            if (fName) fName.value = '';
+            const modal = document.getElementById('addFolderModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
         };
 
         window.closeAddFolderModal = () => {
-            document.getElementById('addFolderModal').classList.add('hidden');
-            document.getElementById('addFolderModal').classList.remove('flex');
+            const modal = document.getElementById('addFolderModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
         };
 
         window.submitNewFolder = async () => {
-            const folderName = document.getElementById('newFolderName').value.trim();
+            const fNameEl = document.getElementById('newFolderName');
+            const folderName = fNameEl ? fNameEl.value.trim() : "";
             if (!folderName) return window.showToast("נא להזין שם לתיקייה");
 
             const user = window.auth.currentUser;
@@ -1317,8 +1740,10 @@
             }
 
             const btn = document.querySelector('#addFolderModal button:nth-child(2)');
-            btn.disabled = true;
-            btn.textContent = 'יוצר...';
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'יוצר...';
+            }
 
             try {
                 const folderId = 'folder_' + Date.now().toString();
@@ -1327,7 +1752,7 @@
                     createdAt: new Date().toISOString()
                 });
                 
-                window.logActivity("יצר/ה תיקייה חדשה: " + folderName);
+                if(window.logActivity) window.logActivity("יצר/ה תיקייה חדשה: " + folderName);
                 window.showToast("התיקייה נוצרה בהצלחה", false);
                 window.closeAddFolderModal();
                 window.selectFolder(folderId); 
@@ -1335,22 +1760,24 @@
                 console.error(e);
                 window.showToast("שגיאה ביצירת התיקייה");
             } finally {
-                btn.disabled = false;
-                btn.textContent = 'צור';
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'צור';
+                }
             }
         };
 
         window.selectFolder = (folderId) => {
             currentFolderId = folderId;
-            renderFolders();
+            window.renderFolders();
             if(window.auth.currentUser && currentProfileId && localStorage.getItem('shoval_simulated_logout') !== 'true') {
-                renderTasks();
+                if (window.renderTasks) window.renderTasks();
             } else {
-                renderGuestTasks();
+                if (window.renderGuestTasks) window.renderGuestTasks();
             }
         };
 
-        const renderFolders = () => {
+        window.renderFolders = () => {
             const container = document.getElementById('folderTabsContainer');
             if (!container) return;
             
@@ -1372,7 +1799,7 @@
             container.innerHTML = html;
         };
 
-        const listenToCloudFolders = (userId, profileId) => {
+        window.listenToCloudFolders = (userId, profileId) => {
             if (unsubscribeFolders) unsubscribeFolders();
             const foldersRef = window.collection(window.db, "artifacts", window.appId, "users", userId, `folders_${profileId}`);
             
@@ -1380,64 +1807,79 @@
                 allFolders = [];
                 snapshot.forEach(doc => allFolders.push({ id: doc.id, ...doc.data() }));
                 allFolders.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
-                renderFolders();
+                window.renderFolders();
             }, (error) => console.error("Folders sync error:", error));
         };
 
         let mouseTipShown = false;
         const canvas = document.getElementById('drawCanvas');
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas ? canvas.getContext('2d') : null;
         let isDrawing = false;
 
-        function resizeCanvas() {
+        window.resizeCanvas = () => {
+            if (!canvas) return;
             canvas.width = canvas.offsetWidth;
             canvas.height = canvas.offsetHeight;
             window.clearCanvas(); 
-        }
-        window.addEventListener('resize', () => { if(!document.getElementById('drawModal').classList.contains('hidden')) resizeCanvas(); });
+        };
+        
+        window.addEventListener('resize', () => { 
+            const drawModal = document.getElementById('drawModal');
+            if(drawModal && !drawModal.classList.contains('hidden')) window.resizeCanvas(); 
+        });
 
         window.clearCanvas = () => {
+            if (!ctx) return;
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         };
 
         window.openDrawModal = () => {
-            document.getElementById('drawModal').classList.remove('hidden');
-            document.getElementById('drawModal').classList.add('flex');
-            setTimeout(resizeCanvas, 50); 
+            const drawModal = document.getElementById('drawModal');
+            if (drawModal) {
+                drawModal.classList.remove('hidden');
+                drawModal.classList.add('flex');
+                setTimeout(window.resizeCanvas, 50); 
+            }
         };
 
         window.closeDrawModal = () => {
-            document.getElementById('drawModal').classList.add('hidden');
-            document.getElementById('drawModal').classList.remove('flex');
+            const drawModal = document.getElementById('drawModal');
+            if (drawModal) {
+                drawModal.classList.add('hidden');
+                drawModal.classList.remove('flex');
+            }
         };
 
-        canvas.addEventListener('pointerdown', (e) => {
-            isDrawing = true;
-            if (e.pointerType === 'mouse' && !mouseTipShown) {
-                window.showToast("טיפ: מומלץ לחבר לוח ציור (Drawing Pad) לשיפור חווית משתמש 🎨", false);
-                mouseTipShown = true;
-            }
-            ctx.beginPath();
-            ctx.moveTo(e.offsetX, e.offsetY);
-            ctx.lineWidth = e.pointerType === 'pen' ? (e.pressure * 5 + 1) : 3; 
-            ctx.lineCap = 'round';
-            ctx.strokeStyle = '#000000'; 
-        });
+        if (canvas) {
+            canvas.addEventListener('pointerdown', (e) => {
+                isDrawing = true;
+                if (e.pointerType === 'mouse' && !mouseTipShown) {
+                    window.showToast("טיפ: מומלץ לחבר לוח ציור (Drawing Pad) לשיפור חווית משתמש 🎨", false);
+                    mouseTipShown = true;
+                }
+                ctx.beginPath();
+                ctx.moveTo(e.offsetX, e.offsetY);
+                ctx.lineWidth = e.pointerType === 'pen' ? (e.pressure * 5 + 1) : 3; 
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = '#000000'; 
+            });
 
-        canvas.addEventListener('pointermove', (e) => {
-            if (!isDrawing) return;
-            if (e.pointerType === 'pen') {
-                ctx.lineWidth = (e.pressure * 5) + 1; 
-            }
-            ctx.lineTo(e.offsetX, e.offsetY);
-            ctx.stroke();
-        });
+            canvas.addEventListener('pointermove', (e) => {
+                if (!isDrawing) return;
+                if (e.pointerType === 'pen') {
+                    ctx.lineWidth = (e.pressure * 5) + 1; 
+                }
+                ctx.lineTo(e.offsetX, e.offsetY);
+                ctx.stroke();
+            });
 
-        canvas.addEventListener('pointerup', () => { isDrawing = false; });
-        canvas.addEventListener('pointerout', () => { isDrawing = false; });
+            canvas.addEventListener('pointerup', () => { isDrawing = false; });
+            canvas.addEventListener('pointerout', () => { isDrawing = false; });
+        }
 
         window.saveDrawnTask = async () => {
+            if (!canvas) return;
             const dataUrl = canvas.toDataURL('image/jpeg', 0.8); 
             const user = window.auth.currentUser;
             if (user && currentProfileId && localStorage.getItem('shoval_simulated_logout') !== 'true') {
@@ -1451,7 +1893,7 @@
                         completed: false,
                         createdAt: new Date().toISOString()
                     });
-                    window.logActivity("יצר/ה פתק מצויר בתיקייה 🖊️"); 
+                    if (window.logActivity) window.logActivity("יצר/ה פתק מצויר בתיקייה 🖊️"); 
                     window.closeDrawModal();
                     window.showToast("הפתק נשמר בהצלחה", false);
                 } catch (e) {
@@ -1460,11 +1902,11 @@
             } else {
                 guestTasks.unshift({ id: Date.now(), text: "פתק בכתב יד", isImage: true, imageUrl: dataUrl, folderId: currentFolderId });
                 window.closeDrawModal();
-                window.renderGuestTasks();
+                if (window.renderGuestTasks) window.renderGuestTasks();
             }
         };
 
-        const listenToCloudDocs = (userId, profileId) => {
+        window.listenToCloudDocs = (userId, profileId) => {
             if (unsubscribeDocs) unsubscribeDocs();
             const docsRef = window.collection(window.db, "artifacts", window.appId, "users", userId, `docs_${profileId}`);
             
@@ -1472,11 +1914,12 @@
                 allDocs = [];
                 snapshot.forEach(doc => allDocs.push({ id: doc.id, ...doc.data() }));
                 allDocs.sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-                renderDocsList();
+                if (window.renderDocsList) window.renderDocsList();
+                if (window.renderCloudFiles) window.renderCloudFiles();
             }, (error) => console.error("Docs sync error:", error));
         };
 
-        const renderDocsList = () => {
+        window.renderDocsList = () => {
             const list = document.getElementById('docsList');
             const empty = document.getElementById('emptyDocsMsg');
             if (!list || !empty) return;
@@ -1508,15 +1951,21 @@
             const docObj = allDocs.find(d => d.id === docId);
             if(docObj) {
                 window.editingDocId = docId;
-                document.getElementById('docTitleInput').value = docObj.title;
-                document.getElementById('docContentInput').value = docObj.content;
+                const titleInput = document.getElementById('docTitleInput');
+                const contentInput = document.getElementById('docContentInput');
+                if (titleInput) titleInput.value = docObj.title;
+                if (contentInput) contentInput.value = docObj.content;
                 window.showToast("המסמך נטען", false);
             }
         };
 
         window.saveDocument = async () => {
-            const title = document.getElementById('docTitleInput').value.trim();
-            const content = document.getElementById('docContentInput').value.trim();
+            const titleInput = document.getElementById('docTitleInput');
+            const contentInput = document.getElementById('docContentInput');
+            if (!titleInput || !contentInput) return;
+            
+            const title = titleInput.value.trim();
+            const content = contentInput.value.trim();
             if (!title) return window.showToast("חובה להזין כותרת למסמך");
             const user = window.auth.currentUser;
             if (!user || !currentProfileId || localStorage.getItem('shoval_simulated_logout') === 'true') {
@@ -1529,11 +1978,11 @@
                     content: content,
                     updatedAt: new Date().toISOString()
                 }, { merge: true });
-                window.logActivity("שמר/ה מסמך: " + title);
+                if (window.logActivity) window.logActivity("שמר/ה מסמך: " + title);
                 window.showToast("המסמך נשמר בהצלחה בענן! ☁️", false);
                 window.editingDocId = null;
-                document.getElementById('docTitleInput').value = '';
-                document.getElementById('docContentInput').value = '';
+                titleInput.value = '';
+                contentInput.value = '';
             } catch(e) {
                 console.error(e);
                 window.showToast("שגיאה בשמירת המסמך");
@@ -1547,11 +1996,13 @@
             try {
                 await window.deleteDoc(window.doc(window.db, "artifacts", window.appId, "users", user.uid, `docs_${currentProfileId}`, docId));
                 window.showToast("מסמך נמחק לתמיד", false);
-                window.logActivity("מחק/ה מסמך לצמיתות");
+                if (window.logActivity) window.logActivity("מחק/ה מסמך לצמיתות");
                 if (window.editingDocId === docId) {
                     window.editingDocId = null;
-                    document.getElementById('docTitleInput').value = '';
-                    document.getElementById('docContentInput').value = '';
+                    const titleInput = document.getElementById('docTitleInput');
+                    const contentInput = document.getElementById('docContentInput');
+                    if(titleInput) titleInput.value = '';
+                    if(contentInput) contentInput.value = '';
                 }
             } catch(e) {
                 window.showToast("שגיאה במחיקה");
@@ -1613,7 +2064,71 @@
             `;
         };
 
-        const initAuth = async () => {
+        window.renderTasks = () => {
+            const list = document.getElementById('taskList');
+            const empty = document.getElementById('emptyMsg');
+            if (!list || !empty) return;
+            
+            list.innerHTML = "";
+            
+            const filteredTasks = allTasks.filter(t => {
+                if (currentFolderId === 'general') return !t.folderId || t.folderId === 'general';
+                return t.folderId === currentFolderId;
+            });
+            
+            if (filteredTasks.length === 0) {
+                empty.classList.remove('hidden');
+            } else {
+                empty.classList.add('hidden');
+                
+                filteredTasks.forEach(t => {
+                    const li = document.createElement('li');
+                    li.className = "glass-card p-4 flex flex-col transition-all hover:bg-white/10";
+                    
+                    let contentHtml = t.isImage 
+                        ? `<img src="${t.imageUrl}" class="bg-white rounded-lg w-full mt-2 mb-2 max-h-48 object-contain" alt="פתק בכתב יד" />`
+                        : `<span class="text-right flex-1 text-lg mb-2">${t.text}</span>`;
+
+                    li.innerHTML = `
+                        ${contentHtml}
+                        <div class="flex justify-end items-center gap-2 mt-1">
+                            <span class="text-[10px] text-purple-400/50 bg-purple-500/10 px-2 py-1 rounded-full font-bold tracking-widest uppercase">PRO</span>
+                            <button class="text-red-500/70 hover:text-red-500 p-2 transition-colors rounded-full hover:bg-red-500/10" onclick="window.deleteCloudTask('${t.id}')">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+            }
+        };
+
+        window.listenToCloudTasks = (userId, profileId) => {
+            if (unsubscribeTasks) unsubscribeTasks();
+            const tasksRef = window.collection(window.db, "artifacts", window.appId, "users", userId, `tasks_${profileId}`);
+            
+            unsubscribeTasks = window.onSnapshot(tasksRef, (snapshot) => {
+                allTasks = [];
+                snapshot.forEach(doc => allTasks.push({ id: doc.id, ...doc.data() }));
+                allTasks.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+                window.renderTasks();
+                if (window.renderCloudFiles) window.renderCloudFiles();
+            }, (error) => console.error("Tasks sync error:", error));
+        };
+
+        window.deleteCloudTask = async (taskId) => {
+            const user = window.auth.currentUser;
+            if (!user || !currentProfileId) return;
+
+            try {
+                await window.deleteDoc(window.doc(window.db, "artifacts", window.appId, "users", user.uid, `tasks_${currentProfileId}`, taskId));
+                if (window.logActivity) window.logActivity("מחק/ה משימה מהלוח");
+            } catch (e) {
+                window.showToast("שגיאה במחיקת המשימה מהענן", true);
+            }
+        };
+
+        window.initAuth = async () => {
             if (window.isUsingPlaceholder) {
                 window.showToast("שים לב: יש להכניס את מפתחות ה-Firebase בקוד לעבודה מחוץ ל-Sandbox", true);
                 return;
@@ -1632,7 +2147,8 @@
             try {
                 const uid = window.auth.currentUser.uid;
                 const logId = Date.now().toString();
-                const profileName = document.getElementById('userNameLabel').textContent;
+                const userNameEl = document.getElementById('userNameLabel');
+                const profileName = userNameEl ? userNameEl.textContent : "לא ידוע";
                 await window.setDoc(window.doc(window.db, "artifacts", window.appId, "users", uid, "history", logId), {
                     profileId: currentProfileId,
                     profileName: profileName,
@@ -1646,67 +2162,91 @@
 
         window.openHistory = async () => {
             const modal = document.getElementById('historyModal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+            
             const list = document.getElementById('historyList');
             const subtitle = document.getElementById('historySubtitle');
-            document.getElementById('historyTitle').textContent = window.currentIsManager ? "היסטוריית שימוש (כללית)" : "היסטוריית שימוש (אישית)";
-            subtitle.textContent = window.currentIsManager ? "מציג פעילות של כל משתמשי החשבון המקושרים" : "מציג את הפעילות האישית שלך בלבד (מצב משתמש)";
-            list.innerHTML = '<div class="text-center text-gray-500 mt-10"><span class="loader"></span> טוען נתונים...</div>';
+            
+            const historyTitle = document.getElementById('historyTitle');
+            if (historyTitle) historyTitle.textContent = window.currentIsManager ? "היסטוריית שימוש (כללית)" : "היסטוריית שימוש (אישית)";
+            if (subtitle) subtitle.textContent = window.currentIsManager ? "מציג פעילות של כל משתמשי החשבון המקושרים" : "מציג את הפעילות האישית שלך בלבד (מצב משתמש)";
+            
+            if (list) list.innerHTML = '<div class="text-center text-gray-500 mt-10"><span class="loader"></span> טוען נתונים...</div>';
+            
             try {
                 const user = window.auth.currentUser;
                 const historyRef = window.collection(window.db, "artifacts", window.appId, "users", user.uid, "history");
                 const snap = await window.getDocs(window.query(historyRef));
+                
                 let logs = [];
                 snap.forEach(doc => logs.push({id: doc.id, ...doc.data()}));
+                
                 if (!window.currentIsManager) {
                     logs = logs.filter(log => log.profileId === currentProfileId);
                 }
+                
                 logs.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-                list.innerHTML = "";
-                if (logs.length === 0) {
-                    list.innerHTML = '<div class="text-center text-gray-500 mt-10 text-sm">אין היסטוריית פעולות להצגה כרגע.</div>';
-                } else {
-                    logs.forEach(log => {
-                        const dateObj = new Date(log.timestamp);
-                        const timeStr = dateObj.toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
-                        const dateStr = dateObj.toLocaleDateString('he-IL', {day: '2-digit', month: '2-digit'});
-                        const item = document.createElement('div');
-                        item.className = "bg-white/5 p-4 rounded-xl border border-white/10 flex flex-row-reverse justify-between items-center";
-                        item.innerHTML = `
-                            <div class="flex flex-col text-right">
-                                ${window.currentIsManager ? `<span class="text-[10px] text-indigo-400 font-bold tracking-wider uppercase mb-1">${log.profileName}</span>` : ''}
-                                <span class="font-bold text-sm text-gray-200">${log.action}</span>
-                            </div>
-                            <div class="text-[10px] text-gray-500 text-left border-l border-white/10 pl-3">
-                                <div class="font-bold">${timeStr}</div>
-                                <div>${dateStr}</div>
-                            </div>
-                        `;
-                        list.appendChild(item);
-                    });
+                
+                if (list) {
+                    list.innerHTML = "";
+                    if (logs.length === 0) {
+                        list.innerHTML = '<div class="text-center text-gray-500 mt-10 text-sm">אין היסטוריית פעולות להצגה כרגע.</div>';
+                    } else {
+                        logs.forEach(log => {
+                            const dateObj = new Date(log.timestamp);
+                            const timeStr = dateObj.toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
+                            const dateStr = dateObj.toLocaleDateString('he-IL', {day: '2-digit', month: '2-digit'});
+                            
+                            const item = document.createElement('div');
+                            item.className = "bg-white/5 p-4 rounded-xl border border-white/10 flex flex-row-reverse justify-between items-center";
+                            item.innerHTML = `
+                                <div class="flex flex-col text-right">
+                                    ${window.currentIsManager ? `<span class="text-[10px] text-indigo-400 font-bold tracking-wider uppercase mb-1">${log.profileName}</span>` : ''}
+                                    <span class="font-bold text-sm text-gray-200">${log.action}</span>
+                                </div>
+                                <div class="text-[10px] text-gray-500 text-left border-l border-white/10 pl-3">
+                                    <div class="font-bold">${timeStr}</div>
+                                    <div>${dateStr}</div>
+                                </div>
+                            `;
+                            list.appendChild(item);
+                        });
+                    }
                 }
             } catch(e) {
                 console.error(e);
-                list.innerHTML = '<div class="text-center text-red-500 mt-10">שגיאה בטעינת ההיסטוריה</div>';
+                if (list) list.innerHTML = '<div class="text-center text-red-500 mt-10">שגיאה בטעינת ההיסטוריה</div>';
             }
         };
 
         window.closeHistory = () => {
             const modal = document.getElementById('historyModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
         };
 
-        window.openModal = () => document.getElementById('authModal').classList.remove('hidden');
-        window.closeModal = () => document.getElementById('authModal').classList.add('hidden');
+        window.openModal = () => {
+            const modal = document.getElementById('authModal');
+            if (modal) modal.classList.remove('hidden');
+        };
+
+        window.closeModal = () => {
+            const modal = document.getElementById('authModal');
+            if (modal) modal.classList.add('hidden');
+        };
         
         window.handleProfileClick = () => {
             const user = window.auth.currentUser;
             const isLoggedOut = localStorage.getItem('shoval_simulated_logout') === 'true';
             
             if (user && !user.isAnonymous && !isLoggedOut) {
-                document.getElementById('profilesModal').classList.remove('hidden');
+                const modal = document.getElementById('profilesModal');
+                if (modal) modal.classList.remove('hidden');
             } else {
                 window.openModal();
             }
@@ -1717,149 +2257,101 @@
 
         window.openAddProfile = () => {
             if (!window.editingProfileId) {
-                document.getElementById('addProfileTitle').textContent = "פרופיל משתמש חדש";
-                document.getElementById('newProfileName').value = "";
-                document.getElementById('newProfileBirth').value = "";
-                document.getElementById('addProfileBtn').textContent = "שמור והמשך";
-                document.getElementById('deleteProfileBtn').classList.add('hidden');
+                const addProfileTitle = document.getElementById('addProfileTitle');
+                if (addProfileTitle) addProfileTitle.textContent = "פרופיל משתמש חדש";
+                
+                const nameInput = document.getElementById('newProfileName');
+                const birthInput = document.getElementById('newProfileBirth');
+                if(nameInput) nameInput.value = "";
+                if(birthInput) birthInput.value = "";
+                
+                const addBtn = document.getElementById('addProfileBtn');
+                if(addBtn) addBtn.textContent = "שמור והמשך";
+                
+                const deleteBtn = document.getElementById('deleteProfileBtn');
+                if (deleteBtn) deleteBtn.classList.add('hidden');
             }
-            document.getElementById('addProfileModal').classList.remove('hidden');
+            const modal = document.getElementById('addProfileModal');
+            if(modal) modal.classList.remove('hidden');
         };
 
         window.openEditProfile = (id, name, birthDate) => {
             window.editingProfileId = id;
-            document.getElementById('addProfileTitle').textContent = "עריכת פרופיל";
-            document.getElementById('newProfileName').value = name;
-            document.getElementById('newProfileBirth').value = birthDate;
-            document.getElementById('addProfileBtn').textContent = "שמור שינויים";
+            
+            const addProfileTitle = document.getElementById('addProfileTitle');
+            if (addProfileTitle) addProfileTitle.textContent = "עריכת פרופיל";
+            
+            const nameInput = document.getElementById('newProfileName');
+            const birthInput = document.getElementById('newProfileBirth');
+            if(nameInput) nameInput.value = name;
+            if(birthInput) birthInput.value = birthDate;
+            
+            const addBtn = document.getElementById('addProfileBtn');
+            if(addBtn) addBtn.textContent = "שמור שינויים";
             
             const deleteBtn = document.getElementById('deleteProfileBtn');
-            deleteBtn.classList.remove('hidden');
-            deleteBtn.dataset.confirm = "false";
-            deleteBtn.textContent = "מחק פרופיל";
+            if (deleteBtn) {
+                deleteBtn.classList.remove('hidden');
+                deleteBtn.dataset.confirm = "false";
+                deleteBtn.textContent = "מחק פרופיל";
+            }
             
-            document.getElementById('addProfileModal').classList.remove('hidden');
+            const modal = document.getElementById('addProfileModal');
+            if(modal) modal.classList.remove('hidden');
         };
 
         window.closeAddProfile = () => {
             window.editingProfileId = null;
             if (deleteConfirmTimer) clearTimeout(deleteConfirmTimer);
-            document.getElementById('addProfileModal').classList.add('hidden');
-        };
-
-        window.submitNewProfile = async () => {
-            const name = document.getElementById('newProfileName').value.trim();
-            const birthDate = document.getElementById('newProfileBirth').value;
-            if(!name) return window.showToast("נא למלא את שם המשתמש", true);
-            if(!window.editingProfileId && profilesData.length >= 4) return window.showToast("הגעת למגבלת 4 משתמשים בחשבון", true);
-
-            const btn = document.getElementById('addProfileBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loader"></span> שומר...';
-            try {
-                const user = window.auth.currentUser;
-                let age = null;
-                let isMinor = false;
-                if (birthDate) {
-                    const birth = new Date(birthDate);
-                    age = new Date().getFullYear() - birth.getFullYear();
-                    isMinor = age < 18;
-                }
-                let profileRef;
-                if (window.editingProfileId) {
-                    profileRef = window.doc(window.db, "artifacts", window.appId, "users", user.uid, "user_profiles", window.editingProfileId);
-                } else {
-                    profileRef = window.doc(window.collection(window.db, "artifacts", window.appId, "users", user.uid, "user_profiles"));
-                }
-                const profileData = {
-                    id: profileRef.id,
-                    displayName: name,
-                    birthDate: birthDate || "",
-                    age: age,
-                    isMinor: isMinor
-                };
-                if (!window.editingProfileId) {
-                    profileData.createdAt = new Date().toISOString();
-                    profileData.isManager = false; 
-                    profileData.accountType = 'family';
-                }
-                await window.setDoc(profileRef, profileData, { merge: true });
-                window.showToast(window.editingProfileId ? "פרופיל עודכן בהצלחה!" : "פרופיל נוסף בהצלחה!", false);
-                window.closeAddProfile();
-                loadProfiles(user); 
-            } catch(e) {
-                console.error(e);
-                window.showToast("שגיאה בשמירת פרופיל", true);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = window.editingProfileId ? "שמור שינויים" : "שמור והמשך";
-            }
-        };
-
-        window.deleteProfile = async () => {
-            if (!window.editingProfileId) return;
-            const btn = document.getElementById('deleteProfileBtn');
-            if (btn.dataset.confirm !== "true") {
-                btn.dataset.confirm = "true";
-                btn.textContent = "בטוח? לחץ שוב למחיקה";
-                deleteConfirmTimer = setTimeout(() => {
-                    btn.dataset.confirm = "false";
-                    btn.textContent = "מחק פרופיל";
-                }, 3000);
-                return;
-            }
-            if (deleteConfirmTimer) clearTimeout(deleteConfirmTimer);
-            btn.disabled = true;
-            btn.textContent = "מוחק...";
-            try {
-                const user = window.auth.currentUser;
-                await window.deleteDoc(window.doc(window.db, "artifacts", window.appId, "users", user.uid, "user_profiles", window.editingProfileId));
-                if (window.editingProfileId === sessionStorage.getItem('shoval_current_profile_id')) {
-                    sessionStorage.removeItem('shoval_current_profile_id');
-                    currentProfileId = null;
-                }
-                window.showToast("פרופיל נמחק בהצלחה", false);
-                window.closeAddProfile();
-                loadProfiles(user);
-            } catch(e) {
-                console.error(e);
-                window.showToast("שגיאה במחיקת פרופיל", true);
-                btn.disabled = false;
-                btn.textContent = "מחק פרופיל";
-            }
+            const modal = document.getElementById('addProfileModal');
+            if(modal) modal.classList.add('hidden');
         };
         
         window.showForm = (type) => {
-            document.getElementById('authChoice').classList.add('hidden');
-            document.getElementById('registerForm').classList.add('hidden');
-            document.getElementById('loginForm').classList.add('hidden');
-            if (type === 'choice') document.getElementById('authChoice').classList.remove('hidden');
-            if (type === 'register') document.getElementById('registerForm').classList.remove('hidden');
-            if (type === 'login') document.getElementById('loginForm').classList.remove('hidden');
+            const authChoice = document.getElementById('authChoice');
+            const registerForm = document.getElementById('registerForm');
+            const loginForm = document.getElementById('loginForm');
+            
+            if(authChoice) authChoice.classList.add('hidden');
+            if(registerForm) registerForm.classList.add('hidden');
+            if(loginForm) loginForm.classList.add('hidden');
+            
+            if (type === 'choice' && authChoice) authChoice.classList.remove('hidden');
+            if (type === 'register' && registerForm) registerForm.classList.remove('hidden');
+            if (type === 'login' && loginForm) loginForm.classList.remove('hidden');
         };
 
-        const resetMainUI = () => {
-            document.getElementById('authBtn').classList.remove('hidden');
+        window.resetMainUI = () => {
+            const authBtn = document.getElementById('authBtn');
+            if (authBtn) authBtn.classList.remove('hidden');
+            
             const logoutBtn = document.getElementById('logoutBtn');
-            if(logoutBtn) logoutBtn.classList.add('hidden');
+            if (logoutBtn) logoutBtn.classList.add('hidden');
+            
             const switchProfileBtn = document.getElementById('switchProfileBtn');
-            if(switchProfileBtn) switchProfileBtn.classList.add('hidden');
+            if (switchProfileBtn) switchProfileBtn.classList.add('hidden');
+            
             const historyBtn = document.getElementById('historyBtn');
-            if(historyBtn) historyBtn.classList.add('hidden');
+            if (historyBtn) historyBtn.classList.add('hidden');
             
             const userStatusLabel = document.getElementById('userStatusLabel');
-            if(userStatusLabel) {
+            if (userStatusLabel) {
                 userStatusLabel.textContent = "מצב אורח";
                 userStatusLabel.className = "text-[10px] text-gray-500 uppercase tracking-widest font-bold";
             }
             
             const userNameLabel = document.getElementById('userNameLabel');
-            if(userNameLabel) userNameLabel.textContent = "אורח";
+            if (userNameLabel) userNameLabel.textContent = "אורח";
             
             const userInitial = document.getElementById('userInitial');
-            if(userInitial) {
+            if (userInitial) {
                 userInitial.textContent = "?";
                 userInitial.className = "w-12 h-12 rounded-2xl bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center font-bold text-xl border border-white/20 shadow-lg";
+            }
+            
+            const safetyNotice = document.getElementById('safetyNotice');
+            if (safetyNotice) {
+                safetyNotice.textContent = "משימות במצב אורח לא נשמרות בענן ולא יהיו זמינות במכשירים אחרים.";
             }
             
             currentProfileId = null;
@@ -1871,14 +2363,17 @@
             if (unsubscribeFolders) { unsubscribeFolders(); unsubscribeFolders = null; }
             if (unsubscribeDocs) { unsubscribeDocs(); unsubscribeDocs = null; }
             if (unsubscribeGoals) { unsubscribeGoals(); unsubscribeGoals = null; }
+            if (unsubscribeFiles) { unsubscribeFiles(); unsubscribeFiles = null; }
             
             const folderTabs = document.getElementById('folderTabsContainer');
-            if(folderTabs) folderTabs.innerHTML = "";
-            window.renderGuestGoals();
-            window.renderGuestTasks();
+            if (folderTabs) folderTabs.innerHTML = "";
+            
+            if(window.renderGuestGoals) window.renderGuestGoals();
+            if(window.renderGuestTasks) window.renderGuestTasks();
+            if(window.renderCloudFiles) window.renderCloudFiles();
         };
 
-        const loadProfiles = async (user, forceShowModal = false) => {
+        window.loadProfiles = async (user, forceShowModal = false) => {
             try {
                 const profilesRef = window.collection(window.db, "artifacts", window.appId, "users", user.uid, "user_profiles");
                 const snap = await window.getDocs(window.query(profilesRef));
@@ -1888,69 +2383,103 @@
                 
                 if (profilesData.length === 0) {
                     const cancelBtn = document.getElementById('cancelAddProfileBtn');
-                    if(cancelBtn) cancelBtn.classList.add('hidden');
+                    if (cancelBtn) cancelBtn.classList.add('hidden');
                     
-                    document.getElementById('addProfileTitle').textContent = "צור את הפרופיל הראשון בחשבון";
-                    document.getElementById('authBtn').classList.add('hidden');
+                    const addProfileTitle = document.getElementById('addProfileTitle');
+                    if (addProfileTitle) addProfileTitle.textContent = "צור את הפרופיל הראשון בחשבון";
+                    
+                    const authBtn = document.getElementById('authBtn');
+                    if (authBtn) authBtn.classList.add('hidden');
+                    
                     const logoutBtn = document.getElementById('logoutBtn');
-                    if(logoutBtn) logoutBtn.classList.remove('hidden');
+                    if (logoutBtn) logoutBtn.classList.remove('hidden');
                     
                     const switchBtn = document.getElementById('switchProfileBtn');
-                    if(switchBtn) {
+                    if (switchBtn) {
                         switchBtn.classList.remove('hidden');
                         switchBtn.textContent = "צור פרופיל ראשון";
                         switchBtn.onclick = window.openAddProfile;
                     }
                     
-                    document.getElementById('userStatusLabel').textContent = "חשבון ראשי";
-                    document.getElementById('userNameLabel').textContent = "ממתין לפרופיל";
+                    const userStatusLabel = document.getElementById('userStatusLabel');
+                    if (userStatusLabel) userStatusLabel.textContent = "חשבון ראשי";
+                    
+                    const userNameLabel = document.getElementById('userNameLabel');
+                    if (userNameLabel) userNameLabel.textContent = "ממתין לפרופיל";
+                    
+                    const safetyNotice = document.getElementById('safetyNotice');
+                    if (safetyNotice) safetyNotice.textContent = "לחץ למעלה כדי ליצור את הפרופיל הראשון שלך.";
                     
                     if (forceShowModal) window.openAddProfile();
                 } else {
                     const cancelBtn = document.getElementById('cancelAddProfileBtn');
-                    if(cancelBtn) cancelBtn.classList.remove('hidden');
+                    if (cancelBtn) cancelBtn.classList.remove('hidden');
                     
-                    document.getElementById('addProfileTitle').textContent = "פרופיל משתמש חדש";
-                    renderProfilesList();
+                    const addProfileTitle = document.getElementById('addProfileTitle');
+                    if (addProfileTitle) addProfileTitle.textContent = "פרופיל משתמש חדש";
+                    
+                    if(window.renderProfilesList) window.renderProfilesList();
+                    
                     const savedProfileId = sessionStorage.getItem('shoval_current_profile_id');
                     const foundProfile = profilesData.find(p => p.id === savedProfileId);
+                    
                     if (foundProfile) {
-                        window.selectProfile(foundProfile.id, foundProfile.displayName, foundProfile.isMinor, gradients[0], foundProfile.isManager, foundProfile.accountType);
+                        if(window.selectProfile) window.selectProfile(foundProfile.id, foundProfile.displayName, foundProfile.isMinor, gradients[0], foundProfile.isManager);
                     } else {
-                        document.getElementById('authBtn').classList.add('hidden');
+                        const authBtn = document.getElementById('authBtn');
+                        if (authBtn) authBtn.classList.add('hidden');
+                        
                         const logoutBtn = document.getElementById('logoutBtn');
-                        if(logoutBtn) logoutBtn.classList.remove('hidden');
+                        if (logoutBtn) logoutBtn.classList.remove('hidden');
                         
                         const switchBtn = document.getElementById('switchProfileBtn');
-                        if(switchBtn) {
+                        if (switchBtn) {
                             switchBtn.classList.remove('hidden');
                             switchBtn.textContent = "בחר פרופיל ענן";
                             switchBtn.onclick = window.switchProfile;
                         }
                         
-                        document.getElementById('userStatusLabel').textContent = "חשבון מחובר";
-                        document.getElementById('userStatusLabel').className = "text-[10px] text-green-400 uppercase tracking-widest font-bold";
-                        document.getElementById('userNameLabel').textContent = "בחר משתמש";
-                        document.getElementById('userInitial').textContent = "👋";
-                        document.getElementById('userInitial').className = "w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-bold text-xl border border-white/20 shadow-lg text-white";
+                        const userStatusLabel = document.getElementById('userStatusLabel');
+                        if (userStatusLabel) {
+                            userStatusLabel.textContent = "חשבון מחובר";
+                            userStatusLabel.className = "text-[10px] text-green-400 uppercase tracking-widest font-bold";
+                        }
                         
-                        if (forceShowModal) document.getElementById('profilesModal').classList.remove('hidden');
+                        const userNameLabel = document.getElementById('userNameLabel');
+                        if (userNameLabel) userNameLabel.textContent = "בחר משתמש";
+                        
+                        const userInitial = document.getElementById('userInitial');
+                        if (userInitial) {
+                            userInitial.textContent = "👋";
+                            userInitial.className = "w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-bold text-xl border border-white/20 shadow-lg text-white";
+                        }
+                        
+                        const safetyNotice = document.getElementById('safetyNotice');
+                        if (safetyNotice) safetyNotice.textContent = "החשבון הראשי מחובר. בחר פרופיל למעלה כדי לראות את המשימות.";
+                        
+                        if (forceShowModal) {
+                            const pModal = document.getElementById('profilesModal');
+                            if(pModal) pModal.classList.remove('hidden');
+                        }
                     }
                 }
             } catch(e) {
                 console.error("Load profiles error", e);
-                resetMainUI();
+                window.resetMainUI();
             }
         };
 
-        const renderProfilesList = () => {
+        window.renderProfilesList = () => {
             const container = document.getElementById('profilesContainer');
+            if (!container) return;
             container.innerHTML = "";
+            
             profilesData.forEach((p, index) => {
                 const grad = gradients[index % gradients.length];
                 const div = document.createElement('div');
                 div.className = "relative group flex flex-col items-center cursor-pointer hover:scale-110 transition-transform duration-300";
-                div.onclick = () => window.selectProfile(p.id, p.displayName, p.isMinor, grad, p.isManager, p.accountType);
+                div.onclick = () => window.selectProfile(p.id, p.displayName, p.isMinor, grad, p.isManager);
+                
                 div.innerHTML = `
                     <button onclick="event.stopPropagation(); window.openEditProfile('${p.id}', '${p.displayName}', '${p.birthDate}')" class="absolute top-2 right-2 bg-black/60 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10 text-sm hover:bg-black/80">
                         ✏️
@@ -1960,12 +2489,13 @@
                     </div>
                     <span class="text-xl text-gray-200 font-medium flex items-center gap-2">
                         ${p.displayName}
-                        ${p.isManager ? (p.accountType === 'school' ? '<span class="text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full">בית ספר 🎓</span>' : '<span class="text-[10px] bg-blue-500 text-white px-2 py-0.5 rounded-full">מנהל</span>') : ''}
+                        ${p.isManager ? '<span class="text-[10px] bg-blue-500 text-white px-2 py-0.5 rounded-full">מנהל</span>' : ''}
                     </span>
                     ${p.isMinor ? '<span class="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full mt-2 font-bold tracking-wider">מוגן 🛡️</span>' : ''}
                 `;
                 container.appendChild(div);
             });
+            
             if (profilesData.length < 4) {
                 const addDiv = document.createElement('div');
                 addDiv.className = "flex flex-col items-center cursor-pointer hover:scale-110 transition-transform duration-300";
@@ -1980,16 +2510,20 @@
             }
         };
 
-        window.selectProfile = (profileId, profileName, isMinor, gradClass = gradients[0], isManager = false, accountType = 'family') => {
+        window.selectProfile = (profileId, profileName, isMinor, gradClass = gradients[0], isManager = false) => {
             currentProfileId = profileId;
             window.currentIsManager = isManager;
             violationCount = 0; 
             sessionStorage.setItem('shoval_current_profile_id', profileId);
-            document.getElementById('profilesModal').classList.add('hidden');
             
-            document.getElementById('authBtn').classList.add('hidden');
+            const profilesModal = document.getElementById('profilesModal');
+            if (profilesModal) profilesModal.classList.add('hidden');
+            
+            const authBtn = document.getElementById('authBtn');
+            if (authBtn) authBtn.classList.add('hidden');
+            
             const logoutBtn = document.getElementById('logoutBtn');
-            if(logoutBtn) logoutBtn.classList.remove('hidden');
+            if (logoutBtn) logoutBtn.classList.remove('hidden');
             
             const switchBtn = document.getElementById('switchProfileBtn');
             if(switchBtn) {
@@ -1999,32 +2533,40 @@
             }
             
             const historyBtn = document.getElementById('historyBtn');
-            if(historyBtn) historyBtn.classList.remove('hidden');
+            if (historyBtn) historyBtn.classList.remove('hidden');
             
             const userStatusLabel = document.getElementById('userStatusLabel');
-            if (isManager) {
-                if (accountType === 'school') {
-                    userStatusLabel.textContent = "מנהל בית ספרי 🎓";
-                    userStatusLabel.className = "text-[10px] text-emerald-400 uppercase tracking-widest font-bold";
-                } else {
+            if (userStatusLabel) {
+                if (isManager) {
                     userStatusLabel.textContent = "פרופיל מנהל ראשי";
                     userStatusLabel.className = "text-[10px] text-blue-400 uppercase tracking-widest font-bold";
+                } else {
+                    userStatusLabel.textContent = isMinor ? "משתמש צעיר מוגן" : "פרופיל אישי (ענן)";
+                    userStatusLabel.className = isMinor ? "text-[10px] text-yellow-400 uppercase tracking-widest font-bold" : "text-[10px] text-purple-400 uppercase tracking-widest font-bold";
                 }
-            } else {
-                userStatusLabel.textContent = isMinor ? "משתמש צעיר מוגן" : "פרופיל אישי (ענן)";
-                userStatusLabel.className = isMinor ? "text-[10px] text-yellow-400 uppercase tracking-widest font-bold" : "text-[10px] text-purple-400 uppercase tracking-widest font-bold";
             }
             
-            document.getElementById('userNameLabel').textContent = profileName;
+            const userNameLabel = document.getElementById('userNameLabel');
+            if (userNameLabel) userNameLabel.textContent = profileName;
+            
             const userInitial = document.getElementById('userInitial');
-            userInitial.textContent = profileName.charAt(0).toUpperCase();
-            userInitial.className = `w-12 h-12 rounded-2xl bg-gradient-to-br ${gradClass} flex items-center justify-center font-bold text-xl border border-white/20 shadow-lg text-white`;
+            if (userInitial) {
+                userInitial.textContent = profileName.charAt(0).toUpperCase();
+                userInitial.className = `w-12 h-12 rounded-2xl bg-gradient-to-br ${gradClass} flex items-center justify-center font-bold text-xl border border-white/20 shadow-lg text-white`;
+            }
             
-            listenToCloudFolders(window.auth.currentUser.uid, profileId);
-            listenToCloudTasks(window.auth.currentUser.uid, profileId);
-            listenToCloudGoals(window.auth.currentUser.uid, profileId);
+            const safetyNotice = document.getElementById('safetyNotice');
+            if (safetyNotice) {
+                safetyNotice.textContent = isMinor ? `היי ${profileName}! מערכת סינון התוכן מופעלת להגנתך. 🛡️` : `שלום, ${profileName}! המשימות שלך בטוחות בענן. ☁️`;
+            }
             
-            window.logActivity("נכנס/ה למערכת");
+            if(window.listenToCloudFolders) window.listenToCloudFolders(window.auth.currentUser.uid, profileId);
+            if(window.listenToCloudTasks) window.listenToCloudTasks(window.auth.currentUser.uid, profileId);
+            if(window.listenToCloudGoals) window.listenToCloudGoals(window.auth.currentUser.uid, profileId);
+            if(window.listenToCloudDocs) window.listenToCloudDocs(window.auth.currentUser.uid, profileId);
+            if(window.listenToCloudFiles) window.listenToCloudFiles(window.auth.currentUser.uid, profileId);
+            
+            if(window.logActivity) window.logActivity("נכנס/ה למערכת");
         };
 
         window.switchProfile = () => {
@@ -2033,46 +2575,164 @@
             window.currentIsManager = false;
             violationCount = 0;
             currentFolderId = 'general';
-            document.getElementById('taskList').innerHTML = ""; 
+            
+            const taskList = document.getElementById('taskList');
+            if (taskList) taskList.innerHTML = ""; 
+            
             const folderTabs = document.getElementById('folderTabsContainer');
             if(folderTabs) folderTabs.innerHTML = "";
             
             const historyBtn = document.getElementById('historyBtn');
-            if(historyBtn) historyBtn.classList.add('hidden');
+            if (historyBtn) historyBtn.classList.add('hidden');
             
             if(unsubscribeTasks) unsubscribeTasks();
             if(unsubscribeFolders) unsubscribeFolders();
             if(unsubscribeDocs) unsubscribeDocs();
             if(unsubscribeGoals) unsubscribeGoals();
+            if(unsubscribeFiles) unsubscribeFiles();
             
-            renderProfilesList();
-            document.getElementById('profilesModal').classList.remove('hidden');
+            if(window.renderProfilesList) window.renderProfilesList();
+            
+            const profilesModal = document.getElementById('profilesModal');
+            if (profilesModal) profilesModal.classList.remove('hidden');
+        };
+
+        window.submitNewProfile = async () => {
+            const newProfileNameInput = document.getElementById('newProfileName');
+            const name = newProfileNameInput ? newProfileNameInput.value.trim() : "";
+            
+            const newProfileBirthInput = document.getElementById('newProfileBirth');
+            const birthDate = newProfileBirthInput ? newProfileBirthInput.value : "";
+            
+            if(!name) return window.showToast("נא למלא את שם המשתמש", true);
+            if(!window.editingProfileId && profilesData.length >= 4) return window.showToast("הגעת למגבלת 4 משתמשים בחשבון", true);
+
+            const btn = document.getElementById('addProfileBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loader"></span> שומר...';
+            }
+            
+            try {
+                const user = window.auth.currentUser;
+                let age = null;
+                let isMinor = false;
+                
+                if (birthDate) {
+                    const birth = new Date(birthDate);
+                    age = new Date().getFullYear() - birth.getFullYear();
+                    isMinor = age < 18;
+                }
+                
+                let profileRef;
+                if (window.editingProfileId) {
+                    profileRef = window.doc(window.db, "artifacts", window.appId, "users", user.uid, "user_profiles", window.editingProfileId);
+                } else {
+                    profileRef = window.doc(window.collection(window.db, "artifacts", window.appId, "users", user.uid, "user_profiles"));
+                }
+                
+                const profileData = {
+                    id: profileRef.id,
+                    displayName: name,
+                    birthDate: birthDate || "",
+                    age: age,
+                    isMinor: isMinor
+                };
+
+                if (!window.editingProfileId) {
+                    profileData.createdAt = new Date().toISOString();
+                    profileData.isManager = false; 
+                }
+                
+                await window.setDoc(profileRef, profileData, { merge: true });
+                window.showToast(window.editingProfileId ? "פרופיל עודכן בהצלחה!" : "פרופיל נוסף בהצלחה!", false);
+                window.closeAddProfile();
+                
+                if(window.loadProfiles) window.loadProfiles(user); 
+            } catch(e) {
+                console.error(e);
+                window.showToast("שגיאה בשמירת פרופיל", true);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = window.editingProfileId ? "שמור שינויים" : "שמור והמשך";
+                }
+            }
+        };
+
+        window.deleteProfile = async () => {
+            if (!window.editingProfileId) return;
+            const btn = document.getElementById('deleteProfileBtn');
+            if (!btn) return;
+
+            if (btn.dataset.confirm !== "true") {
+                btn.dataset.confirm = "true";
+                btn.textContent = "בטוח? לחץ שוב למחיקה";
+                deleteConfirmTimer = setTimeout(() => {
+                    btn.dataset.confirm = "false";
+                    btn.textContent = "מחק פרופיל";
+                }, 3000);
+                return;
+            }
+
+            if (deleteConfirmTimer) clearTimeout(deleteConfirmTimer);
+            btn.disabled = true;
+            btn.textContent = "מוחק...";
+
+            try {
+                const user = window.auth.currentUser;
+                await window.deleteDoc(window.doc(window.db, "artifacts", window.appId, "users", user.uid, "user_profiles", window.editingProfileId));
+
+                if (window.editingProfileId === sessionStorage.getItem('shoval_current_profile_id')) {
+                    sessionStorage.removeItem('shoval_current_profile_id');
+                    currentProfileId = null;
+                }
+
+                window.showToast("פרופיל נמחק בהצלחה", false);
+                window.closeAddProfile();
+                if(window.loadProfiles) window.loadProfiles(user);
+            } catch(e) {
+                console.error(e);
+                window.showToast("שגיאה במחיקת פרופיל", true);
+                if(btn) {
+                    btn.disabled = false;
+                    btn.textContent = "מחק פרופיל";
+                }
+            }
         };
 
         window.submitRegister = async () => {
-            if (window.isUsingPlaceholder) return window.showToast("שים לב: נא לעדכן מפתחות Firebase בקוד");
-            const name = document.getElementById('regDisplayName').value.trim();
-            const email = document.getElementById('regEmail').value.trim().toLowerCase();
-            const password = document.getElementById('regPassword').value;
-            const birthDate = document.getElementById('regBirthDate').value;
-            const accountType = document.getElementById('regAccountType') ? document.getElementById('regAccountType').value : 'family';
+            if (window.isUsingPlaceholder) return window.showToast("שים לב: נא לעדכן מפתחות Firebase בקוד", true);
+            const nameEl = document.getElementById('regDisplayName');
+            const emailEl = document.getElementById('regEmail');
+            const pwdEl = document.getElementById('regPassword');
+            const bDateEl = document.getElementById('regBirthDate');
+            const accTypeEl = document.getElementById('regAccountType');
+            
+            const name = nameEl ? nameEl.value.trim() : "";
+            const email = emailEl ? emailEl.value.trim().toLowerCase() : "";
+            const password = pwdEl ? pwdEl.value : "";
+            const birthDate = bDateEl ? bDateEl.value : "";
+            const accountType = accTypeEl ? accTypeEl.value : 'family';
 
-            if (!name) return window.showToast("נא למלא את שם מנהל החשבון");
-            if (!email.includes('@')) return window.showToast("אנא הזן כתובת אימייל תקינה");
-            if (password.length < 6) return window.showToast("סיסמה חייבת להכיל לפחות 6 תווים");
+            if (!name) return window.showToast("נא למלא את שם מנהל החשבון", true);
+            if (!email.includes('@')) return window.showToast("אנא הזן כתובת אימייל תקינה", true);
+            if (password.length < 6) return window.showToast("סיסמה חייבת להכיל לפחות 6 תווים", true);
 
             if (accountType === 'school') {
-                if (!birthDate) return window.showToast("חובה להזין תאריך לידה לאימות גיל");
+                if (!birthDate) return window.showToast("חובה להזין תאריך לידה לאימות גיל", true);
                 const birth = new Date(birthDate);
                 const age = new Date().getFullYear() - birth.getFullYear();
-                if (age < 18) return window.showToast("יצירת חשבון חינוכי מותרת לצוות מעל גיל 18 בלבד 🛑");
-                const idFile = document.getElementById('regIdUpload').files[0];
-                if (!idFile) return window.showToast("נא להעלות צילום תעודה מזהה או כרטיס עובד להשלמת האימות");
+                if (age < 18) return window.showToast("יצירת חשבון חינוכי מותרת לצוות מעל גיל 18 בלבד 🛑", true);
+                const idFile = document.getElementById('regIdUpload');
+                if (!idFile || !idFile.files[0]) return window.showToast("נא להעלות צילום תעודה מזהה או כרטיס עובד להשלמת האימות", true);
             }
 
             const btn = document.getElementById('regSubmitBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loader"></span> יוצר חשבון ראשי...';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loader"></span> יוצר חשבון ראשי...';
+            }
 
             try {
                 const userCredential = await window.createUserWithEmailAndPassword(window.auth, email, password);
@@ -2108,32 +2768,39 @@
 
                 localStorage.setItem('shoval_simulated_logout', 'false');
                 window.closeModal();
-                window.selectProfile(profileData.id, profileData.displayName, profileData.isMinor, gradients[0], true, profileData.accountType);
+                if(window.selectProfile) window.selectProfile(profileData.id, profileData.displayName, profileData.isMinor, gradients[0], true);
             } catch (err) {
                 if (err.code === 'auth/email-already-in-use') {
-                    window.showToast("האימייל כבר קיים במערכת");
+                    window.showToast("האימייל כבר קיים במערכת", true);
                 } else if (err.code === 'auth/network-request-failed') {
-                    window.showToast("שגיאת רשת (או שהמפתחות בקוד שגויים)");
+                    window.showToast("שגיאת רשת (או שהמפתחות בקוד שגויים)", true);
                 } else {
                     console.error("System Error:", err);
-                    window.showToast("שגיאה ביצירת חשבון");
+                    window.showToast("שגיאה ביצירת חשבון", true);
                 }
             } finally {
-                btn.disabled = false;
-                btn.textContent = "צור חשבון מנהל";
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = "צור חשבון מנהל";
+                }
             }
         };
 
         window.submitLogin = async () => {
-            if (window.isUsingPlaceholder) return window.showToast("שים לב: נא לעדכן מפתחות Firebase בקוד");
-            const emailInput = document.getElementById('loginEmail').value.trim().toLowerCase();
-            const passwordInput = document.getElementById('loginPassword').value;
+            if (window.isUsingPlaceholder) return window.showToast("שים לב: נא לעדכן מפתחות Firebase בקוד", true);
+            const emailEl = document.getElementById('loginEmail');
+            const pwdEl = document.getElementById('loginPassword');
             
-            if (!emailInput || !passwordInput) return window.showToast("הזן אימייל וסיסמה");
+            const emailInput = emailEl ? emailEl.value.trim().toLowerCase() : "";
+            const passwordInput = pwdEl ? pwdEl.value : "";
+            
+            if (!emailInput || !passwordInput) return window.showToast("הזן אימייל וסיסמה", true);
 
             const btn = document.getElementById('loginSubmitBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loader"></span> מתחבר...';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loader"></span> מתחבר...';
+            }
 
             try {
                 await window.signInWithEmailAndPassword(window.auth, emailInput, passwordInput);
@@ -2141,24 +2808,53 @@
                 localStorage.setItem('shoval_simulated_logout', 'false');
                 window.showToast("התחברת בהצלחה לענן!", false);
                 window.closeModal();
-                loadProfiles(window.auth.currentUser, true); 
+                if (window.loadProfiles) window.loadProfiles(window.auth.currentUser, true); 
             } catch (e) {
                 if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
-                    window.showToast("אימייל או סיסמה שגויים");
+                    window.showToast("אימייל או סיסמה שגויים", true);
                 } else if (e.code === 'auth/network-request-failed') {
-                    window.showToast("שגיאת רשת (או שהמפתחות בקוד שגויים)");
+                    window.showToast("שגיאת רשת (או שהמפתחות בקוד שגויים)", true);
                 } else {
                     console.error("System Error:", e);
-                    window.showToast("שגיאה בחיבור למערכת");
+                    window.showToast("שגיאה בחיבור למערכת", true);
                 }
             } finally {
-                btn.disabled = false;
-                btn.textContent = "כניסה";
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = "כניסה";
+                }
             }
         };
 
+        window.handleLogout = async () => {
+            try {
+                await window.signOut(window.auth);
+                localStorage.setItem('shoval_simulated_logout', 'true');
+                
+                const pModal = document.getElementById('profilesModal');
+                if (pModal) pModal.classList.add('hidden');
+                
+                if(window.resetMainUI) window.resetMainUI();
+                window.showToast("התנתקת מהחשבון הראשי בהצלחה.", false);
+                if(!window.isUsingPlaceholder) {
+                    await window.signInAnonymously(window.auth);
+                }
+            } catch (error) {
+                console.error("Logout error", error);
+            }
+        };
+
+        window.onAuthStateChanged(window.auth, async (user) => {
+            if (user && !user.isAnonymous && localStorage.getItem('shoval_simulated_logout') !== 'true') {
+                if (window.loadProfiles) window.loadProfiles(user, false);
+            } else {
+                if (window.resetMainUI) window.resetMainUI();
+            }
+        });
+
         window.addTask = async () => {
             const input = document.getElementById('taskInput');
+            if (!input) return;
             const text = input.value.trim();
             if (!text) return;
             
@@ -2167,12 +2863,13 @@
             if (isForbidden) {
                 window.showToast("לא ניתן להשלים את הפעולה", true);
                 violationCount++; 
-                window.logActivity("ניסיון כתיבת מילה חסומה"); 
+                if(window.logActivity) window.logActivity("ניסיון כתיבת מילה חסומה"); 
                 
                 if (violationCount >= 2 && window.auth.currentUser && currentProfileId) {
                     try {
                         const user = window.auth.currentUser;
-                        const profileName = document.getElementById('userNameLabel').textContent;
+                        const userNameEl = document.getElementById('userNameLabel');
+                        const profileName = userNameEl ? userNameEl.textContent : "לא ידוע";
                         
                         const alertRef = window.doc(window.collection(window.db, "artifacts", window.appId, "users", user.uid, "alerts"));
                         await window.setDoc(alertRef, {
@@ -2202,20 +2899,20 @@
                         createdAt: new Date().toISOString()
                     });
                     input.value = "";
-                    window.logActivity("הוסיף/ה משימה חדשה"); 
+                    if(window.logActivity) window.logActivity("הוסיף/ה משימה חדשה"); 
                 } catch (e) {
-                    window.showToast("שגיאה בשמירה בענן");
+                    window.showToast("שגיאה בשמירה בענן", true);
                 }
             } else {
                 guestTasks.unshift({ id: Date.now(), text: text, folderId: currentFolderId });
                 input.value = "";
-                window.renderGuestTasks();
+                if(window.renderGuestTasks) window.renderGuestTasks();
             }
         };
 
         window.deleteGuestTask = (id) => {
             guestTasks = guestTasks.filter(t => t.id !== id);
-            window.renderGuestTasks();
+            if(window.renderGuestTasks) window.renderGuestTasks();
         };
 
         window.renderGuestTasks = () => {
@@ -2256,7 +2953,6 @@
             }
         };
 
-        // מנגנון אנימציות גלילה
         window.setupScrollAnimations = () => {
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
@@ -2272,7 +2968,7 @@
             });
         };
 
-        initAuth();
+        window.initAuth();
         setTimeout(window.setupScrollAnimations, 500);
 
     </script>
